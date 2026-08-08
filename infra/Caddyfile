@@ -1,0 +1,43 @@
+# =============================================================================
+# Caddy — HTTPS automatico (Let's Encrypt, gratis, renueva solo)
+# =============================================================================
+# Sin dominio propio: usa <ip>.sslip.io que resuelve a tu IP publica.
+# Caddy obtiene certificado HTTPS valido automaticamente.
+#
+# Con dominio propio: reemplaza canete.sslip.io por tu dominio (ej: canete.com.pe)
+# y Caddy hace el resto.
+# =============================================================================
+
+{
+	# email tu-email@gmail.com  # descomenta para notificaciones de Let's Encrypt
+}
+
+# Frontend (Next.js) — todo lo que no es /api
+canete.sslip.io {
+	encode gzip zstd
+
+	# API backend — /api/* va al Spring Boot
+	handle_path /api/* {
+		reverse_proxy api:8080 {
+			header_up Host {host}
+			header_up X-Real-IP {remote_host}
+			header_up X-Forwarded-For {remote_host}
+			header_up X-Forwarded-Proto {scheme}
+		}
+	}
+
+	# Resto al frontend Next.js
+	handle {
+		reverse_proxy web:3000 {
+			header_up Host {host}
+			header_up X-Real-IP {remote_host}
+			header_up X-Forwarded-For {remote_host}
+			header_up X-Forwarded-Proto {scheme}
+		}
+	}
+}
+
+# HTTP -> HTTPS redirect automatico (Caddy lo hace por defecto con :80)
+:80 {
+	redir https://{host}{uri} 308
+}
