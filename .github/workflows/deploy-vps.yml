@@ -67,15 +67,25 @@ jobs:
             ENV
           EOF
 
-      # --- Build & deploy on VPS --------------------------------------------
-      - name: Build and deploy on VPS
+      # --- Login to GHCR on VPS (so we can pull private backend image) ------
+      - name: Login to GHCR on VPS
+        run: |
+          ssh ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
+            # Use a Personal Access Token (PAT) with read:packages scope stored as GHCR_PAT secret
+            echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u ${{ secrets.VPS_USER }} --password-stdin
+          EOF
+
+      # --- Pull backend image & deploy on VPS --------------------------------
+      - name: Pull and deploy on VPS
         run: |
           ssh ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
             cd ${{ secrets.DEPLOY_PATH }}
             # Actualizar Caddyfile con la IP IPv4 del VPS (usar el secret, no ifconfig.me que puede devolver IPv6)
             VPS_IP=${{ secrets.VPS_HOST }}
             sed -i "s/canete.sslip.io/$VPS_IP.sslip.io/g" infra/Caddyfile
-            # Build + deploy
+            # Pull latest backend image from GHCR
+            docker compose -f docker-compose.prod.yml pull api
+            # Deploy (web builds locally, api uses pulled image)
             docker compose -f docker-compose.prod.yml up -d --build
             # Limpieza de imagenes viejas
             docker image prune -f

@@ -5,9 +5,10 @@ Marketplace turistico y gastronomico multiempresa inspirado en Airbnb, Uber Eats
 ## Arquitectura
 
 - `apps/web`: frontend Next.js 15 + Tailwind + Framer Motion + Zustand + TanStack Query.
-- `services/api`: backend Spring Boot 3 con estructura modular inspirada en hexagonal.
-- `infra/nginx`: proxy reverso para frontend y API.
-- `docker-compose.yml`: stack local con web, api, postgres, redis y nginx.
+- **Backend**: repo separado [`yhassuoG/canete-api`](https://github.com/yhassuoG/canete-api) — Spring Boot 3, Java 21. Se publica como imagen Docker en `ghcr.io/yhassuog/canete-api:latest`.
+- `infra/db`: scripts SQL de inicialización (montados por el contenedor postgres).
+- `infra/Caddyfile`: reverse proxy HTTPS (Caddy 2 + Let's Encrypt).
+- `docker-compose.prod.yml`: stack de producción — web (build local) + api (imagen GHCR) + postgres + redis + caddy.
 
 ## Modulos base incluidos
 
@@ -16,7 +17,7 @@ Marketplace turistico y gastronomico multiempresa inspirado en Airbnb, Uber Eats
 - Base multiempresa con `tenantSlug` en los modelos expuestos.
 - API inicial para catalogo, reservas y pedidos.
 - Seguridad Spring Security + JWT listos para extender.
-- Pipeline CI para build de frontend y backend.
+- Pipeline CI para build de frontend.
 
 ## Arranque local
 
@@ -30,15 +31,18 @@ npm run dev
 
 ### Backend
 
+El backend ahora vive en [`yhassuoG/canete-api`](https://github.com/yhassuoG/canete-api). Clonar y ejecutar:
+
 ```bash
-cd services/api
+git clone https://github.com/yhassuoG/canete-api.git
+cd canete-api
 mvn spring-boot:run
 ```
 
-### Docker Compose
+### Docker Compose (producción)
 
 ```bash
-docker compose up --build
+docker compose -f docker-compose.prod.yml up -d --build
 ```
 
 ## Siguientes extensiones recomendadas

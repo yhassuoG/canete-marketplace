@@ -15,8 +15,8 @@ services:
     restart: unless-stopped
 
   api:
-    build:
-      context: ./services/api
+    # Pre-built image from GitHub Container Registry (built by yhassuoG/canete-api repo)
+    image: ghcr.io/yhassuog/canete-api:latest
     environment:
       APP_SECURITY_JWT_SECRET: ${JWT_SECRET:-c4n3t3-m4rk3tpl4c3-pr0d-s3cr3t-k3y-2026-ch4ng3-m3}
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/canete_marketplace?currentSchema=canete_marketplace
@@ -51,7 +51,7 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./services/api/src/main/resources/db:/docker-entrypoint-initdb.d:ro
+      - ./infra/db:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d canete_marketplace"]
       interval: 10s
