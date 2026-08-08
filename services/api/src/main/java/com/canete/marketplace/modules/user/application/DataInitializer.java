@@ -84,6 +84,10 @@ public class DataInitializer implements ApplicationRunner {
             log.info("DataInitializer: creating missing demo user without tenant mapping: {}", email);
         }
 
+        // Hash the password immediately — password_hash column is NOT NULL
+        String rawPassword = DEMO_PASSWORDS.getOrDefault(email, "demo123");
+        user.setPasswordHash(passwordEncoder.encode(rawPassword));
+
         return userRepository.save(user);
     }
 }

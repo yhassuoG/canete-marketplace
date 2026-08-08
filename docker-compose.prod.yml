@@ -19,7 +19,7 @@ services:
       context: ./services/api
     environment:
       APP_SECURITY_JWT_SECRET: ${JWT_SECRET:-c4n3t3-m4rk3tpl4c3-pr0d-s3cr3t-k3y-2026-ch4ng3-m3}
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/canete_marketplace
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/canete_marketplace?currentSchema=canete_marketplace
       SPRING_DATASOURCE_USERNAME: ${DB_USER:-postgres}
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-postgres}
       SPRING_DATA_REDIS_HOST: redis
