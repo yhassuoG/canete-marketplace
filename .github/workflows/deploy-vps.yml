@@ -46,10 +46,9 @@ jobs:
             --exclude 'target' \
             --exclude '.next' \
             --exclude '*.env' \
-            docker-compose.prod.yml \
-            infra/ \
-            apps/web/ \
-            services/api/ \
+            --exclude '.github' \
+            --exclude 'infra/vps-ssh-key.txt' \
+            ./ \
             ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:${{ secrets.DEPLOY_PATH }}/
 
       # --- Create .env on VPS from secrets ----------------------------------
