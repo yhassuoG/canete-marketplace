@@ -16,6 +16,7 @@ services:
 
   api:
     # Pre-built image from GitHub Container Registry (built by yhassuoG/canete-api repo)
+    # GHCR requires lowercase owner name
     image: ghcr.io/yhassuog/canete-api:latest
     environment:
       APP_SECURITY_JWT_SECRET: ${JWT_SECRET:-c4n3t3-m4rk3tpl4c3-pr0d-s3cr3t-k3y-2026-ch4ng3-m3}
