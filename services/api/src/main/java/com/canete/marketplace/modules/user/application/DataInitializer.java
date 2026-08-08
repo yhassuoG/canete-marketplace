@@ -88,6 +88,11 @@ public class DataInitializer implements ApplicationRunner {
         String rawPassword = DEMO_PASSWORDS.getOrDefault(email, "demo123");
         user.setPasswordHash(passwordEncoder.encode(rawPassword));
 
+        // Set timestamps — created_at/updated_at columns are NOT NULL
+        java.time.LocalDateTime now = java.time.LocalDateTime.now();
+        user.setCreatedAt(now);
+        user.setUpdatedAt(now);
+
         return userRepository.save(user);
     }
 }

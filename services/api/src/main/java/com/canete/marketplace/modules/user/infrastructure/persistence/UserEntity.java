@@ -65,5 +65,6 @@ public class UserEntity {
     public void setTenantSlug(String tenantSlug)     { this.tenantSlug = tenantSlug; }
     public void setStatus(String status)             { this.status = status; }
     public void setLastLoginAt(LocalDateTime t)       { this.lastLoginAt = t; }
+    public void setCreatedAt(LocalDateTime t)         { this.createdAt = t; }
     public void setUpdatedAt(LocalDateTime t)         { this.updatedAt = t; }
 }
