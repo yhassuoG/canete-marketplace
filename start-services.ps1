@@ -15,7 +15,7 @@ wsl -e bash -c "sudo -u postgres psql -c 'CREATE DATABASE canete_marketplace;' 2
 
 # 3. Aplicar migraciones de base de datos
 Write-Host "Aplicando migraciones..." -ForegroundColor Yellow
-cd D:\proyecto\services\api
+cd D:\proyecto\Backend
 mvn clean compile
 
 Write-Host "`nTodos los servicios están listos!" -ForegroundColor Green

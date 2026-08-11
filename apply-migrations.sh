@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cd /mnt/d/proyecto/services/api/src/main/resources/db
+cd /mnt/d/proyecto/Backend/src/main/resources/db
 
 echo "Aplicando migraciones a la base de datos canete_marketplace..."
 

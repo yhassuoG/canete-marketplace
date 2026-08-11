@@ -48,6 +48,7 @@ jobs:
             --exclude '*.env' \
             --exclude '.github' \
             --exclude 'infra/vps-ssh-key.txt' \
+            --exclude 'Backend' \
             ./ \
             ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:${{ secrets.DEPLOY_PATH }}/
 
@@ -56,7 +57,7 @@ jobs:
         run: |
           ssh ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
             cat > ${{ secrets.DEPLOY_PATH }}/.env << 'ENV'
-            PUBLIC_URL=https://${{ secrets.VPS_HOST }}.sslip.io
+            PUBLIC_URL=https://vallecanete.com
             DB_USER=postgres
             DB_PASSWORD=${{ secrets.DB_PASSWORD }}
             JWT_SECRET=${{ secrets.JWT_SECRET }}
@@ -80,9 +81,7 @@ jobs:
         run: |
           ssh ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
             cd ${{ secrets.DEPLOY_PATH }}
-            # Actualizar Caddyfile con la IP IPv4 del VPS (usar el secret, no ifconfig.me que puede devolver IPv6)
-            VPS_IP=${{ secrets.VPS_HOST }}
-            sed -i "s/canete.sslip.io/$VPS_IP.sslip.io/g" infra/Caddyfile
+            # El Caddyfile ya tiene vallecanete.com hardcodeado — no requiere sed
             # Pull latest backend image from GHCR
             docker compose -f docker-compose.prod.yml pull api
             # Deploy (web builds locally, api uses pulled image)
@@ -95,10 +94,9 @@ jobs:
       - name: Health check
         run: |
           sleep 15
-          VPS_IP=${{ secrets.VPS_HOST }}
           # Esperar a que Caddy responda (HTTPS puede tardar en emitir cert)
           for i in $(seq 1 12); do
-            if curl -skf "https://$VPS_IP.sslip.io" -o /dev/null; then
+            if curl -skf "https://vallecanete.com" -o /dev/null; then
               echo "✅ Frontend OK"
               break
             fi
@@ -106,5 +104,5 @@ jobs:
             sleep 10
           done
           # API health
-          curl -skf "https://$VPS_IP.sslip.io/api/v1/actuator/health" || \
+          curl -skf "https://vallecanete.com/api/v1/actuator/health" || \
             echo "⚠️ API health no responde aún (puede estar iniciando)"

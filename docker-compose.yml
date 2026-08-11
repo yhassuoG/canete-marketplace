@@ -3,7 +3,7 @@ version: "3.9"
 services:
   web:
     build:
-      context: ./apps/web
+      context: ./Frontend
     environment:
       NEXT_PUBLIC_API_URL: http://localhost:8080
     ports:
@@ -12,7 +12,7 @@ services:
 
   api:
     build:
-      context: ./services/api
+      context: ./Backend
     environment:
       APP_SECURITY_JWT_SECRET: c4n3t3-m4rk3tpl4c3-pr0d-s3cr3t-k3y-2026-ch4ng3-m3
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/canete_marketplace
@@ -42,7 +42,7 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./services/api/src/main/resources/db:/docker-entrypoint-initdb.d:ro
+      - ./Backend/src/main/resources/db:/docker-entrypoint-initdb.d:ro
     restart: unless-stopped
 
   redis:

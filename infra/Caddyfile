@@ -4,7 +4,7 @@
 # Sin dominio propio: usa <ip>.sslip.io que resuelve a tu IP publica.
 # Caddy obtiene certificado HTTPS valido automaticamente.
 #
-# Con dominio propio: reemplaza canete.sslip.io por tu dominio (ej: canete.com.pe)
+# Con dominio propio: reemplaza canete.sslip.io por tu dominio (ej: vallecanete.com)
 # y Caddy hace el resto.
 # =============================================================================
 
@@ -13,7 +13,7 @@
 }
 
 # Frontend (Next.js) — todo lo que no es /api
-canete.sslip.io {
+vallecanete.com {
 	encode gzip zstd
 
 	# API backend — /api/* va al Spring Boot

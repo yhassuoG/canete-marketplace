@@ -4,7 +4,7 @@ Marketplace turistico y gastronomico multiempresa inspirado en Airbnb, Uber Eats
 
 ## Arquitectura
 
-- `apps/web`: frontend Next.js 15 + Tailwind + Framer Motion + Zustand + TanStack Query.
+- `Frontend/`: frontend Next.js 15 + Tailwind + Framer Motion + Zustand + TanStack Query.
 - **Backend**: repo separado [`yhassuoG/canete-api`](https://github.com/yhassuoG/canete-api) — Spring Boot 3, Java 21. Se publica como imagen Docker en `ghcr.io/yhassuog/canete-api:latest`.
 - `infra/db`: scripts SQL de inicialización (montados por el contenedor postgres).
 - `infra/Caddyfile`: reverse proxy HTTPS (Caddy 2 + Let's Encrypt).
@@ -24,7 +24,7 @@ Marketplace turistico y gastronomico multiempresa inspirado en Airbnb, Uber Eats
 ### Frontend
 
 ```bash
-cd apps/web
+cd Frontend
 npm install
 npm run dev
 ```

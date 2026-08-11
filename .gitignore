@@ -10,6 +10,9 @@ target/
 .env.*
 !.env.example
 
+# Backend - repo separado (yhassuoG/canete-api), no se commitea aquí
+Backend/
+
 # SSH keys - NUNCA commitear
 infra/vps-ssh-key.txt
 *.pem
