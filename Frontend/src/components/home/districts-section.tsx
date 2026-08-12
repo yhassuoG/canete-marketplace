@@ -3,8 +3,7 @@ import Link from "next/link";
 
 import type { DistrictApiData } from "@/lib/api";
 
-const FALLBACK_IMAGE =
-  "https://images.unsplash.com/photo-1583212292454-39d2ba9d9614?auto=format&fit=crop&w=800&q=60";
+const FALLBACK_IMAGE = "https://picsum.photos/seed/canete-default/800/600";
 
 export function DistrictsSection({ districts }: Readonly<{ districts: DistrictApiData[] }>) {
   if (districts.length === 0) return null;

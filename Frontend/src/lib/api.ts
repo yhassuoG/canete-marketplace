@@ -41,6 +41,7 @@ export interface TenantApiData {
   yapeQrUrl: string | null;
   bannerUrl: string | null;
   logoUrl: string | null;
+  featured: boolean | null;
 }
 
 export interface UpdateTenantConfigPayload {
@@ -887,7 +888,7 @@ export interface EventApiData {
 export async function fetchDistricts(): Promise<DistrictApiData[]> {
   try {
     const res = await fetch(`${API_BASE}/api/v1/content/districts`, {
-      next: { revalidate: 60 },
+      cache: typeof window === "undefined" ? "force-cache" : "no-store",
     });
     if (!res.ok) return [];
     return (await res.json()) as DistrictApiData[];
@@ -900,7 +901,7 @@ export async function fetchDistricts(): Promise<DistrictApiData[]> {
 export async function fetchDistrict(slug: string): Promise<DistrictApiData | null> {
   try {
     const res = await fetch(`${API_BASE}/api/v1/content/districts/${slug}`, {
-      next: { revalidate: 60 },
+      cache: typeof window === "undefined" ? "force-cache" : "no-store",
     });
     if (!res.ok) return null;
     return (await res.json()) as DistrictApiData;
@@ -913,7 +914,7 @@ export async function fetchDistrict(slug: string): Promise<DistrictApiData | nul
 export async function fetchNews(): Promise<NewsApiData[]> {
   try {
     const res = await fetch(`${API_BASE}/api/v1/content/news`, {
-      next: { revalidate: 60 },
+      cache: typeof window === "undefined" ? "force-cache" : "no-store",
     });
     if (!res.ok) return [];
     return (await res.json()) as NewsApiData[];
@@ -926,7 +927,7 @@ export async function fetchNews(): Promise<NewsApiData[]> {
 export async function fetchNewsBySlug(slug: string): Promise<NewsApiData | null> {
   try {
     const res = await fetch(`${API_BASE}/api/v1/content/news/${slug}`, {
-      next: { revalidate: 60 },
+      cache: typeof window === "undefined" ? "force-cache" : "no-store",
     });
     if (!res.ok) return null;
     return (await res.json()) as NewsApiData;
@@ -939,7 +940,7 @@ export async function fetchNewsBySlug(slug: string): Promise<NewsApiData | null>
 export async function fetchEvents(): Promise<EventApiData[]> {
   try {
     const res = await fetch(`${API_BASE}/api/v1/content/events`, {
-      next: { revalidate: 60 },
+      cache: typeof window === "undefined" ? "force-cache" : "no-store",
     });
     if (!res.ok) return [];
     return (await res.json()) as EventApiData[];
@@ -952,11 +953,407 @@ export async function fetchEvents(): Promise<EventApiData[]> {
 export async function fetchEventBySlug(slug: string): Promise<EventApiData | null> {
   try {
     const res = await fetch(`${API_BASE}/api/v1/content/events/${slug}`, {
-      next: { revalidate: 60 },
+      cache: typeof window === "undefined" ? "force-cache" : "no-store",
     });
     if (!res.ok) return null;
     return (await res.json()) as EventApiData;
   } catch {
     return null;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  ADMIN CRUD — Superadmin panel (WordPress-like)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// ── Users ─────────────────────────────────────────────────────────────────────
+
+export interface CreateUserPayload {
+  email: string;
+  password: string;
+  fullName: string;
+  role: "admin" | "business_owner" | "customer";
+  tenantSlug?: string | null;
+}
+
+export interface UpdateUserPayload {
+  email?: string;
+  fullName?: string;
+  role?: "admin" | "business_owner" | "customer";
+  tenantSlug?: string | null;
+  status?: "active" | "suspended";
+  password?: string | null;
+}
+
+export async function createUser(payload: CreateUserPayload): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const res = await fetch(`${API_BASE}/api/v1/users`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => null);
+      return { ok: false, error: data?.error || `Error ${res.status}` };
+    }
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: String(e) };
+  }
+}
+
+export async function updateUser(id: string, payload: UpdateUserPayload): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const res = await fetch(`${API_BASE}/api/v1/users/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => null);
+      return { ok: false, error: data?.error || `Error ${res.status}` };
+    }
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: String(e) };
+  }
+}
+
+export async function deleteUser(id: string): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const res = await fetch(`${API_BASE}/api/v1/users/${id}`, { method: "DELETE" });
+    if (!res.ok) return { ok: false, error: `Error ${res.status}` };
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: String(e) };
+  }
+}
+
+export async function setUserStatus(id: string, status: "active" | "suspended"): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const res = await fetch(`${API_BASE}/api/v1/users/${id}/status`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status }),
+    });
+    if (!res.ok) return { ok: false, error: `Error ${res.status}` };
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: String(e) };
+  }
+}
+
+// ── Tenants (admin) ──────────────────────────────────────────────────────────
+
+export async function fetchAllTenantsIncludingSuspended(): Promise<TenantApiData[]> {
+  try {
+    const res = await fetch(`${API_BASE}/api/tenants/all`, { cache: "no-store" });
+    if (!res.ok) return [];
+    return (await res.json()) as TenantApiData[];
+  } catch {
+    return [];
+  }
+}
+
+export async function deleteTenant(slug: string): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const res = await fetch(`${API_BASE}/api/tenants/${slug}`, { method: "DELETE" });
+    if (!res.ok) return { ok: false, error: `Error ${res.status}` };
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: String(e) };
+  }
+}
+
+export async function setTenantStatus(slug: string, status: "active" | "suspended"): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const res = await fetch(`${API_BASE}/api/tenants/${slug}/status`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status }),
+    });
+    if (!res.ok) return { ok: false, error: `Error ${res.status}` };
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: String(e) };
+  }
+}
+
+export async function changeTenantPlan(
+  slug: string,
+  plan: string
+): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const res = await fetch(`${API_BASE}/api/tenants/${slug}/plan`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ plan }),
+    });
+    if (!res.ok) return { ok: false, error: `Error ${res.status}` };
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: String(e) };
+  }
+}
+
+export async function setTenantFeatured(
+  slug: string,
+  featured: boolean
+): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const res = await fetch(`${API_BASE}/api/tenants/${slug}/featured`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ featured }),
+    });
+    if (!res.ok) return { ok: false, error: `Error ${res.status}` };
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: String(e) };
+  }
+}
+
+export async function fetchFeaturedTenants(): Promise<TenantApiData[]> {
+  try {
+    const res = await fetch(`${API_BASE}/api/tenants/featured`, { cache: "no-store" });
+    if (!res.ok) return [];
+    return (await res.json()) as TenantApiData[];
+  } catch {
+    return [];
+  }
+}
+
+// ── Generic image upload ─────────────────────────────────────────────────────
+
+export async function uploadImage(file: File, type: string, name?: string): Promise<{ url: string } | null> {
+  try {
+    const formData = new FormData();
+    formData.append("file", file);
+    const params = new URLSearchParams({ type });
+    if (name) params.append("name", name);
+    const res = await fetch(`${API_BASE}/api/admin/upload?${params}`, {
+      method: "POST",
+      body: formData,
+    });
+    if (!res.ok) return null;
+    return (await res.json()) as { url: string };
+  } catch {
+    return null;
+  }
+}
+
+// ── Districts CRUD ───────────────────────────────────────────────────────────
+
+export interface DistrictPayload {
+  slug: string;
+  name: string;
+  description?: string | null;
+  imageUrl?: string | null;
+  region?: string | null;
+  sortOrder?: number | null;
+}
+
+export async function createDistrict(payload: DistrictPayload): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const res = await fetch(`${API_BASE}/api/v1/content/admin/districts`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => null);
+      return { ok: false, error: data?.error || `Error ${res.status}` };
+    }
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: String(e) };
+  }
+}
+
+export async function updateDistrict(id: string, payload: DistrictPayload): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const res = await fetch(`${API_BASE}/api/v1/content/admin/districts/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => null);
+      return { ok: false, error: data?.error || `Error ${res.status}` };
+    }
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: String(e) };
+  }
+}
+
+export async function deleteDistrict(id: string): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const res = await fetch(`${API_BASE}/api/v1/content/admin/districts/${id}`, { method: "DELETE" });
+    if (!res.ok) return { ok: false, error: `Error ${res.status}` };
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: String(e) };
+  }
+}
+
+// ── Platform Settings / Maintenance Mode ─────────────────────────────────────
+
+export interface MaintenanceStatus {
+  enabled: boolean;
+  message: string;
+}
+
+/**
+ * Obtiene el estado actual del modo mantenimiento.
+ * Devuelve { enabled: false, message: "..." } si la API no responde.
+ */
+export async function fetchMaintenanceStatus(): Promise<MaintenanceStatus> {
+  try {
+    const res = await fetch(`${API_BASE}/api/settings/maintenance`, { cache: "no-store" });
+    if (!res.ok) return { enabled: false, message: "" };
+    return (await res.json()) as MaintenanceStatus;
+  } catch {
+    return { enabled: false, message: "" };
+  }
+}
+
+/**
+ * Activa o desactiva el modo mantenimiento.
+ */
+export async function setMaintenanceMode(
+  enabled: boolean,
+  message?: string
+): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const body: Record<string, unknown> = { enabled };
+    if (message !== undefined) body.message = message;
+    const res = await fetch(`${API_BASE}/api/settings/maintenance`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) return { ok: false, error: `Error ${res.status}` };
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: String(e) };
+  }
+}
+
+
+// ── News CRUD ────────────────────────────────────────────────────────────────
+
+export interface NewsPayload {
+  slug: string;
+  title: string;
+  summary?: string | null;
+  content?: string | null;
+  imageUrl?: string | null;
+  category?: string | null;
+  districtSlug?: string | null;
+  publishedAt?: string | null;
+}
+
+export async function createNews(payload: NewsPayload): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const res = await fetch(`${API_BASE}/api/v1/content/admin/news`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => null);
+      return { ok: false, error: data?.error || `Error ${res.status}` };
+    }
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: String(e) };
+  }
+}
+
+export async function updateNews(id: string, payload: NewsPayload): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const res = await fetch(`${API_BASE}/api/v1/content/admin/news/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => null);
+      return { ok: false, error: data?.error || `Error ${res.status}` };
+    }
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: String(e) };
+  }
+}
+
+export async function deleteNews(id: string): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const res = await fetch(`${API_BASE}/api/v1/content/admin/news/${id}`, { method: "DELETE" });
+    if (!res.ok) return { ok: false, error: `Error ${res.status}` };
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: String(e) };
+  }
+}
+
+// ── Events CRUD ──────────────────────────────────────────────────────────────
+
+export interface EventPayload {
+  slug: string;
+  title: string;
+  description?: string | null;
+  imageUrl?: string | null;
+  category?: string | null;
+  districtSlug?: string | null;
+  eventDate?: string | null;
+  startTime?: string | null;
+  endTime?: string | null;
+  location?: string | null;
+  featured?: boolean | null;
+}
+
+export async function createEvent(payload: EventPayload): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const res = await fetch(`${API_BASE}/api/v1/content/admin/events`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => null);
+      return { ok: false, error: data?.error || `Error ${res.status}` };
+    }
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: String(e) };
+  }
+}
+
+export async function updateEvent(id: string, payload: EventPayload): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const res = await fetch(`${API_BASE}/api/v1/content/admin/events/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => null);
+      return { ok: false, error: data?.error || `Error ${res.status}` };
+    }
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: String(e) };
+  }
+}
+
+export async function deleteEvent(id: string): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const res = await fetch(`${API_BASE}/api/v1/content/admin/events/${id}`, { method: "DELETE" });
+    if (!res.ok) return { ok: false, error: `Error ${res.status}` };
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: String(e) };
   }
 }

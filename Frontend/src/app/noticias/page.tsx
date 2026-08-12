@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 };
 
 const FALLBACK_IMAGE =
-  "https://images.unsplash.com/photo-1523906834658-6e24ef2386f9?auto=format&fit=crop&w=800&q=60";
+  "https://picsum.photos/seed/canete-news/800/600";
 
 function formatDate(value: string) {
   try {

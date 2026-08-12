@@ -62,6 +62,8 @@ export interface Tenant {
   yapeQrUrl?: string | null;
   /** Logo circular del tenant (subido por el dueño). URL relativa: /uploads/tenants/{slug}/logo.png */
   logoUrl?: string | null;
+  /** Destacado en la home page (superadmin toggle). */
+  featured?: boolean;
 }
 
 export type TenantFeature =

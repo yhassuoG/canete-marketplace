@@ -27,6 +27,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # --- Clone backend repo (it's gitignored in this repo) ----------------
+      - name: Clone backend repo
+        run: |
+          git clone https://x-access-token:${{ secrets.GHCR_PAT }}@github.com/yhassuoG/canete-api.git Backend
+          ls Backend/Dockerfile
+
       # --- Setup SSH --------------------------------------------------------
       - name: Setup SSH
         run: |
@@ -37,7 +43,7 @@ jobs:
           chmod 600 ~/.ssh/id_ed25519
           ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
 
-      # --- Sync project files (docker-compose, Caddyfile, db scripts) -------
+      # --- Sync project files (docker-compose, Caddyfile, db scripts, Backend) --
       - name: Sync project files to VPS
         run: |
           rsync -avz --delete \
@@ -48,7 +54,6 @@ jobs:
             --exclude '*.env' \
             --exclude '.github' \
             --exclude 'infra/vps-ssh-key.txt' \
-            --exclude 'Backend' \
             ./ \
             ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:${{ secrets.DEPLOY_PATH }}/
 
@@ -68,23 +73,28 @@ jobs:
             ENV
           EOF
 
-      # --- Login to GHCR on VPS (so we can pull private backend image) ------
-      - name: Login to GHCR on VPS
+      # --- Apply DB migrations on VPS ----------------------------------------
+      - name: Apply DB migrations on VPS
         run: |
           ssh ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
-            # Use a Personal Access Token (PAT) with read:packages scope stored as GHCR_PAT secret
-            echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u ${{ secrets.VPS_USER }} --password-stdin
+            cd ${{ secrets.DEPLOY_PATH }}
+            echo "Aplicando migraciones a la base de datos..."
+            for f in infra/db/*.sql; do
+              echo "  → $f"
+              docker exec -i canete-postgres-1 psql -U postgres -d canete_marketplace -f "/docker-entrypoint-initdb.d/$(basename $f)" 2>&1 || true
+            done
+            echo "✓ Migraciones aplicadas"
           EOF
 
-      # --- Pull backend image & deploy on VPS --------------------------------
-      - name: Pull and deploy on VPS
+      # --- Build backend image & deploy on VPS -------------------------------
+      - name: Build and deploy on VPS
         run: |
           ssh ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
             cd ${{ secrets.DEPLOY_PATH }}
             # El Caddyfile ya tiene vallecanete.com hardcodeado — no requiere sed
-            # Pull latest backend image from GHCR
-            docker compose -f docker-compose.prod.yml pull api
-            # Deploy (web builds locally, api uses pulled image)
+            # Build backend image locally on VPS from source (avoids stale GHCR image)
+            docker build -t ghcr.io/yhassuog/canete-api:latest -f Backend/Dockerfile Backend/
+            # Deploy (web builds locally, api uses locally-built image)
             docker compose -f docker-compose.prod.yml up -d --build
             # Limpieza de imagenes viejas
             docker image prune -f

@@ -8,6 +8,8 @@
 --   * orders.payment_reference       : código/ referencia de la transferencia Yape
 -- =============================================================================
 
+SET search_path TO canete_marketplace, public;
+
 ALTER TABLE tenant_config
     ADD COLUMN IF NOT EXISTS allows_delivery  BOOLEAN      NOT NULL DEFAULT TRUE,
     ADD COLUMN IF NOT EXISTS allows_pickup    BOOLEAN      NOT NULL DEFAULT TRUE,

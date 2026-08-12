@@ -1,11 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Save, Globe, Bell, Mail, Smartphone, CreditCard } from "lucide-react";
+import { Save, Globe, Bell, Mail, Smartphone, CreditCard, Wrench, AlertTriangle } from "lucide-react";
+import { fetchMaintenanceStatus, setMaintenanceMode } from "@/lib/api";
 
 export default function AdminSettingsPage() {
   const [saved, setSaved] = useState(false);
+  const [maintenanceOn, setMaintenanceOn] = useState(false);
+  const [maintenanceLoading, setMaintenanceLoading] = useState(false);
+  const [maintenanceSaving, setMaintenanceSaving] = useState(false);
   const [form, setForm] = useState({
     platformName: "vallecanete",
     supportEmail: "soporte@canete.app",
@@ -23,6 +27,27 @@ export default function AdminSettingsPage() {
   });
 
   const handleSave = () => { setSaved(true); setTimeout(() => setSaved(false), 2000); };
+
+  // Cargar estado de mantenimiento al montar
+  useEffect(() => {
+    setMaintenanceLoading(true);
+    fetchMaintenanceStatus().then((status) => {
+      setMaintenanceOn(status.enabled);
+      setMaintenanceLoading(false);
+    });
+  }, []);
+
+  // Toggle mantenimiento → llama al backend
+  const handleMaintenanceToggle = async () => {
+    const newValue = !maintenanceOn;
+    setMaintenanceOn(newValue); // optimista
+    setMaintenanceSaving(true);
+    const res = await setMaintenanceMode(newValue);
+    if (!res.ok) {
+      setMaintenanceOn(!newValue); // revertir
+    }
+    setMaintenanceSaving(false);
+  };
 
   const Field = ({ label, name, type = "text" }: { label: string; name: keyof typeof form; type?: string }) => (
     <div>
@@ -52,6 +77,35 @@ export default function AdminSettingsPage() {
           <Save className="h-4 w-4"/>{saved ? "¡Guardado!" : "Guardar cambios"}
         </button>
       </div>
+
+      {/* ── Modo Mantenimiento ── */}
+      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+        className={`rounded-3xl border p-6 shadow-soft ${maintenanceOn ? "border-amber-300 bg-amber-50" : "border-slate-100 bg-white"}`}>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${maintenanceOn ? "bg-amber-500" : "bg-[#083d77]"}`}>
+              <Wrench className="h-5 w-5 text-white"/>
+            </div>
+            <div>
+              <h3 className="font-semibold text-ink">Modo Mantenimiento</h3>
+              <p className="text-xs text-slate-400">Oculta la página pública y muestra un aviso de mantenimiento</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={handleMaintenanceToggle}
+            disabled={maintenanceLoading || maintenanceSaving}
+            className={`relative h-7 w-12 rounded-full transition-colors disabled:opacity-50 ${maintenanceOn ? "bg-amber-500" : "bg-slate-200"}`}>
+            <span className={`absolute top-0.5 h-6 w-6 rounded-full bg-white shadow transition-transform ${maintenanceOn ? "translate-x-5" : "translate-x-0.5"}`}/>
+          </button>
+        </div>
+        {maintenanceOn && (
+          <div className="mt-4 flex items-start gap-2 rounded-xl bg-amber-100 p-3 text-sm text-amber-800">
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0"/>
+            <span>El sitio público está en mantenimiento. Los usuarios verán la página de aviso. El panel de administración sigue accesible.</span>
+          </div>
+        )}
+      </motion.div>
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* General */}

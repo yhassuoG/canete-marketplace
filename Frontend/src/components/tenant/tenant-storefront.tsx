@@ -23,6 +23,9 @@ import {
   CreditCard,
   Banknote,
   Bike,
+  Plus,
+  Minus,
+  Trash2,
 } from "lucide-react";
 import type { Tenant, Product } from "@/lib/types";
 import { TenantSubscribeButton } from "@/components/tenant/tenant-subscribe-button";
@@ -123,10 +126,10 @@ type OrderForm = {
 };
 
 function OrderModal({
-  tenant, items, total, onClose,
+  tenant, lines, total, onClose,
 }: {
   tenant: Tenant;
-  items: Product[];
+  lines: { product: Product; qty: number }[];
   total: number;
   onClose: () => void;
 }) {
@@ -183,15 +186,9 @@ function OrderModal({
       paymentMethod: usingMercadoPago ? "mercadopago" : form.payment,
       paymentReference: undefined, // MP gestiona la referencia
       notes: form.notes || undefined,
-      items: items.reduce((acc, i) => {
-        const existing = acc.find(x => x.productId === i.id);
-        if (existing) {
-          existing.qty += 1;
-        } else {
-          acc.push({ productId: i.id, name: i.name, price: i.price, qty: 1 });
-        }
-        return acc;
-      }, [] as { productId: string; name: string; price: number; qty: number }[]),
+      items: lines.map(({ product: i, qty }) => ({
+        productId: i.id, name: i.name, price: i.price, qty,
+      })),
     });
 
     if (!created) {
@@ -241,7 +238,7 @@ function OrderModal({
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-end md:items-center justify-center p-4">
+      className="fixed inset-0 z-[70] flex items-end md:items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose}/>
       <motion.div initial={{ y: 60, opacity: 0 }} animate={{ y: 0, opacity: 1 }}
         exit={{ y: 60, opacity: 0 }} transition={{ type: "spring", damping: 28 }}
@@ -261,10 +258,10 @@ function OrderModal({
             <div className="max-h-[70vh] overflow-y-auto px-6 py-5 space-y-5">
               {/* Order summary */}
               <div className="rounded-2xl bg-slate-50 p-4 space-y-2">
-                {items.map(i => (
+                {lines.map(({ product: i, qty }) => (
                   <div key={i.id} className="flex justify-between text-sm">
-                    <span className="text-slate-600">{i.name}</span>
-                    <span className="font-semibold">S/{i.price}</span>
+                    <span className="text-slate-600">{qty} × {i.name}</span>
+                    <span className="font-semibold">S/{(i.price * qty).toFixed(2)}</span>
                   </div>
                 ))}
                 {form.type === "delivery" && deliveryFee > 0 && (
@@ -470,7 +467,7 @@ function ReservationModal({ tenant, onClose }: { tenant: Tenant; onClose: () => 
   const submit = (e: React.FormEvent) => { e.preventDefault(); setStep("confirm"); };
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex items-end md:items-center justify-center p-4">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[70] flex items-end md:items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose}/>
       <motion.div initial={{ y: 60, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 60, opacity: 0 }} transition={{ type: "spring", damping: 28 }}
         className="relative w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl">
@@ -562,7 +559,7 @@ interface TenantStorefrontProps {
 
 export function TenantStorefront({ tenant }: TenantStorefrontProps) {
   const [activeCategory, setActiveCategory] = useState("Todos");
-  const [cart, setCart] = useState<string[]>([]);
+  const [cart, setCart] = useState<Record<string, number>>({});
   const [liked, setLiked] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
   const [orderOpen, setOrderOpen] = useState(false);
@@ -604,10 +601,23 @@ export function TenantStorefront({ tenant }: TenantStorefrontProps) {
       ? products
       : products.filter((p) => p.category === activeCategory);
 
-  const cartItems = products.filter((p) => cart.includes(p.id));
-  const cartTotal = cartItems.reduce((acc, p) => acc + p.price, 0);
+  const cartItems = products.filter((p) => cart[p.id] != null && cart[p.id] > 0);
+  const cartCount = Object.values(cart).reduce((acc, q) => acc + q, 0);
+  const cartTotal = cartItems.reduce((acc, p) => acc + p.price * (cart[p.id] ?? 1), 0);
 
-  const addToCart = (id: string) => setCart((prev) => [...prev, id]);
+  const addToCart = (id: string) => setCart((prev) => ({ ...prev, [id]: (prev[id] ?? 0) + 1 }));
+  const decFromCart = (id: string) =>
+    setCart((prev) => {
+      const next = { ...prev, [id]: (prev[id] ?? 0) - 1 };
+      if (next[id] <= 0) delete next[id];
+      return next;
+    });
+  const removeFromCart = (id: string) =>
+    setCart((prev) => {
+      const next = { ...prev };
+      delete next[id];
+      return next;
+    });
 
   return (
     <div className="min-h-screen" style={{ background: "var(--tenant-bg)" }}>
@@ -768,14 +778,14 @@ export function TenantStorefront({ tenant }: TenantStorefrontProps) {
                 Delivery
               </button>
             )}
-            {cart.length > 0 && (
+            {cartCount > 0 && (
               <button
                 onClick={() => setCartOpen(true)}
                 className="relative flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-semibold text-white"
                 style={{ background: "var(--tenant-accent)" }}
               >
                 <ShoppingCart className="h-4 w-4" />
-                {cart.length}
+                {cartCount}
               </button>
             )}
           </div>
@@ -833,12 +843,11 @@ export function TenantStorefront({ tenant }: TenantStorefrontProps) {
                   </div>
                   <button
                     onClick={() => addToCart(product.id)}
-                    disabled={cart.includes(product.id)}
-                    className="flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold text-white transition-opacity disabled:opacity-50"
+                    className="flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold text-white transition-opacity"
                     style={{ background: "var(--tenant-gradient)" }}
                   >
                     <ShoppingCart className="h-3.5 w-3.5" />
-                    {cart.includes(product.id) ? "✓" : "Agregar"}
+                    {cart[product.id] ? `Agregado (${cart[product.id]})` : "Agregar"}
                   </button>
                 </div>
               </motion.article>
@@ -911,28 +920,51 @@ export function TenantStorefront({ tenant }: TenantStorefrontProps) {
         {cartOpen && (
           <>
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              onClick={() => setCartOpen(false)} className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm"/>
+              onClick={() => setCartOpen(false)} className="fixed inset-0 z-[60] bg-black/40 backdrop-blur-sm"/>
             <motion.div initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }}
               transition={{ type: "spring", stiffness: 300, damping: 32 }}
-              className="fixed right-0 top-0 bottom-0 z-50 w-80 bg-white shadow-2xl flex flex-col">
+              className="fixed right-0 top-0 bottom-0 z-[70] w-full max-w-sm bg-white shadow-2xl flex flex-col">
               <div className="flex items-center justify-between border-b p-5">
                 <h3 className="font-semibold text-ink">Tu pedido</h3>
                 <button onClick={() => setCartOpen(false)}><X className="h-5 w-5 text-slate-400"/></button>
               </div>
               <div className="flex-1 overflow-y-auto p-5 space-y-3">
-                {cartItems.map((item) => (
-                  <div key={item.id} className="flex items-center justify-between">
-                    <div><p className="text-sm font-medium text-ink">{item.name}</p><p className="text-xs text-slate-400">{item.category}</p></div>
-                    <span className="text-sm font-bold">S/{item.price}</span>
+                {cartItems.length === 0 ? (
+                  <p className="py-10 text-center text-sm text-slate-400">Tu carrito está vacío</p>
+                ) : cartItems.map((item) => {
+                  const qty = cart[item.id] ?? 1;
+                  return (
+                  <div key={item.id} className="flex items-center gap-3">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-ink truncate">{item.name}</p>
+                      <p className="text-xs text-slate-400">{item.category} · S/{item.price}</p>
+                    </div>
+                    <div className="flex items-center gap-1 rounded-lg border border-slate-200">
+                      <button onClick={() => decFromCart(item.id)} className="flex h-7 w-7 items-center justify-center text-slate-500 hover:bg-slate-50">
+                        <Minus className="h-3.5 w-3.5"/>
+                      </button>
+                      <span className="w-5 text-center text-sm font-semibold">{qty}</span>
+                      <button onClick={() => addToCart(item.id)} className="flex h-7 w-7 items-center justify-center text-slate-500 hover:bg-slate-50">
+                        <Plus className="h-3.5 w-3.5"/>
+                      </button>
+                    </div>
+                    <span className="w-16 text-right text-sm font-bold">S/{(item.price * qty).toFixed(2)}</span>
+                    <button onClick={() => removeFromCart(item.id)} className="flex h-8 w-8 items-center justify-center text-red-400 hover:bg-red-50 rounded-lg">
+                      <Trash2 className="h-4 w-4"/>
+                    </button>
                   </div>
-                ))}
+                  );
+                })}
               </div>
-              <div className="border-t p-5">
-                <div className="flex justify-between mb-4"><span className="font-medium">Total</span><span className="font-bold text-lg">S/{cartTotal}</span></div>
+              <div className="border-t p-5 pb-24 md:pb-5">
+                <div className="flex justify-between mb-4"><span className="font-medium">Total</span><span className="font-bold text-lg">S/{cartTotal.toFixed(2)}</span></div>
                 <button
-                  className="w-full rounded-xl py-3 text-sm font-semibold text-white"
+                  disabled={cartItems.length === 0}
+                  className={`w-full rounded-xl py-3 text-sm font-semibold text-white transition-opacity ${
+                    cartItems.length === 0 ? "opacity-40 cursor-not-allowed" : ""
+                  }`}
                   style={{ background: "var(--tenant-gradient)" }}
-                  onClick={() => { setCartOpen(false); setOrderOpen(true); }}
+                  onClick={() => { if (cartItems.length === 0) return; setCartOpen(false); setOrderOpen(true); }}
                 >
                   Realizar pedido →
                 </button>
@@ -947,7 +979,7 @@ export function TenantStorefront({ tenant }: TenantStorefrontProps) {
         {orderOpen && (
           <OrderModal
             tenant={tenant}
-            items={cartItems}
+            lines={cartItems.map((p) => ({ product: p, qty: cart[p.id] ?? 1 }))}
             total={cartTotal}
             onClose={() => setOrderOpen(false)}
           />

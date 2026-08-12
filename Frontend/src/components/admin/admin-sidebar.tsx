@@ -16,6 +16,9 @@ import {
   Zap,
   LogOut,
   ChevronRight,
+  MapPin,
+  Newspaper,
+  CalendarDays,
 } from "lucide-react";
 import { clearAuthCookie } from "@/lib/auth";
 
@@ -34,6 +37,14 @@ const NAV = [
       { href: "/admin/users", icon: Users, label: "Usuarios" },
       { href: "/admin/payments", icon: CreditCard, label: "Pagos" },
       { href: "/admin/plans", icon: Zap, label: "Planes SaaS" },
+    ],
+  },
+  {
+    group: "Contenido",
+    items: [
+      { href: "/admin/districts", icon: MapPin, label: "Distritos" },
+      { href: "/admin/news", icon: Newspaper, label: "Noticias" },
+      { href: "/admin/events", icon: CalendarDays, label: "Eventos" },
     ],
   },
   {

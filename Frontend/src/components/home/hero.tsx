@@ -6,8 +6,33 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-import { heroSlides } from "@/lib/data";
+import { heroSlides, type Business } from "@/lib/data";
+import { fetchFeaturedTenants, type TenantApiData } from "@/lib/api";
 import { useMarketplaceStore } from "@/lib/store";
+
+/** Map a TenantApiData from the API to the Business slide shape. */
+function tenantToSlide(t: TenantApiData): Business {
+  const planToTier = (plan: string): Business["adTier"] => {
+    if (plan === "premium" || plan === "enterprise") return "premium";
+    if (plan === "starter") return "destacado";
+    return "basico";
+  };
+  return {
+    name: t.name,
+    category: t.category,
+    location: t.location,
+    score: t.rating,
+    reviews: t.reviewCount,
+    tenantSlug: t.slug,
+    accent: "from-slate-700 to-slate-900",
+    adTier: planToTier(t.plan),
+    tagline: t.tagline || t.description?.slice(0, 80) || "",
+    priceFrom: 20,
+    image: "",
+    imageUrl: t.bannerUrl ?? undefined,
+    badge: t.plan.charAt(0).toUpperCase() + t.plan.slice(1),
+  };
+}
 
 const stats = [
   { label: "Negocios activos", value: "126", suffix: "+" },
@@ -21,12 +46,27 @@ export function Hero() {
   const setMode = useMarketplaceStore((state) => state.setMode);
   const [slide, setSlide] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
+  const [slides, setSlides] = useState<Business[]>(heroSlides);
   const router = useRouter();
 
   useEffect(() => {
-    const t = setInterval(() => setSlide((s) => (s + 1) % heroSlides.length), 5000);
-    return () => clearInterval(t);
+    let active = true;
+    async function loadFeatured() {
+      const featured = await fetchFeaturedTenants();
+      if (!active || featured.length === 0) return;
+      setSlides(featured.map(tenantToSlide));
+    }
+    void loadFeatured();
+    return () => {
+      active = false;
+    };
   }, []);
+
+  useEffect(() => {
+    if (slides.length <= 1) return;
+    const t = setInterval(() => setSlide((s) => (s + 1) % slides.length), 5000);
+    return () => clearInterval(t);
+  }, [slides.length]);
 
   const handleSearch = (e: { preventDefault: () => void }) => {
     e.preventDefault();
@@ -34,7 +74,7 @@ export function Hero() {
     router.push(q ? `/marketplace?q=${encodeURIComponent(q)}` : "/marketplace");
   };
 
-  const current = heroSlides[slide];
+  const current = slides[slide] ?? heroSlides[0];
 
   return (
     <section className="relative overflow-hidden rounded-[2.5rem] border border-brand-100 bg-hero-nature shadow-soft">
@@ -175,8 +215,19 @@ export function Hero() {
               className="overflow-hidden rounded-[2rem] border border-white/60 bg-white shadow-soft"
             >
               {/* Image area with gradient */}
-              <div className={`relative h-56 bg-gradient-to-br ${current.accent} md:h-64`}>
-                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+              <div
+                className={`relative h-56 bg-gradient-to-br ${current.accent} md:h-64`}
+                style={
+                  current.imageUrl
+                    ? {
+                        backgroundImage: `url(${current.imageUrl})`,
+                        backgroundSize: "cover",
+                        backgroundPosition: "center",
+                      }
+                    : undefined
+                }
+              >
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
                 <div className="absolute left-4 top-4 inline-flex items-center gap-1 rounded-full bg-brand-600 px-3 py-1 text-xs font-bold text-white">
                   DESTACADO
                 </div>
@@ -205,7 +256,7 @@ export function Hero() {
                   </p>
                 </div>
                 <Link
-                  href={`/marketplace`}
+                  href={`/${current.tenantSlug}`}
                   className="block rounded-2xl bg-brand-800 py-3 text-center text-sm font-semibold text-white transition hover:bg-brand-900"
                 >
                   Ver negocio →
@@ -218,14 +269,14 @@ export function Hero() {
           <div className="mt-4 flex items-center justify-center gap-3">
             <button
               type="button"
-              onClick={() => setSlide((s) => (s - 1 + heroSlides.length) % heroSlides.length)}
+              onClick={() => setSlide((s) => (s - 1 + slides.length) % slides.length)}
               className="rounded-full border border-slate-200 bg-white p-2 text-slate-600 transition hover:bg-slate-50"
               aria-label="Anterior"
             >
               <ChevronLeft className="h-4 w-4" />
             </button>
             <div className="flex gap-1.5">
-              {heroSlides.map((h, i) => (
+              {slides.map((h, i) => (
                 <button
                   key={h.tenantSlug}
                   type="button"
@@ -239,7 +290,7 @@ export function Hero() {
             </div>
             <button
               type="button"
-              onClick={() => setSlide((s) => (s + 1) % heroSlides.length)}
+              onClick={() => setSlide((s) => (s + 1) % slides.length)}
               className="rounded-full border border-slate-200 bg-white p-2 text-slate-600 transition hover:bg-slate-50"
               aria-label="Siguiente"
             >

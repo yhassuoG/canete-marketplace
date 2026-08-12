@@ -2,8 +2,17 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Search, Filter, Plus, Building2, Star, X } from "lucide-react";
-import { createTenant, fetchTenants, type TenantApiData } from "@/lib/api";
+import { Search, Filter, Plus, Building2, Star, X, Trash2, Power, Pencil, Sparkles } from "lucide-react";
+import {
+  createTenant,
+  fetchTenants,
+  deleteTenant,
+  setTenantStatus,
+  changeTenantPlan,
+  setTenantFeatured,
+  createUser,
+  type TenantApiData,
+} from "@/lib/api";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { getTheme, TENANTS } from "@/lib/themes";
 import type { Tenant, TenantPlan } from "@/lib/types";
@@ -22,6 +31,10 @@ const INITIAL_FORM = {
   lat: "",
   lng: "",
   primaryColor: "#0c4a6e",
+  // ── Credenciales del owner ──
+  ownerEmail: "",
+  ownerPassword: "",
+  ownerFullName: "",
 };
 
 function mapApiTenant(tenant: TenantApiData): Tenant {
@@ -48,6 +61,7 @@ function mapApiTenant(tenant: TenantApiData): Tenant {
     lat: tenant.lat,
     lng: tenant.lng,
     address: tenant.address,
+    featured: tenant.featured ?? false,
   };
 }
 
@@ -59,6 +73,11 @@ export default function AdminCompaniesPage() {
   const [form, setForm] = useState(INITIAL_FORM);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [editingSlug, setEditingSlug] = useState<string | null>(null);
+  const [editPlan, setEditPlan] = useState<TenantPlan>("free");
+  const [editFeatured, setEditFeatured] = useState(false);
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -105,10 +124,96 @@ export default function AdminCompaniesPage() {
       return;
     }
 
+    // ── Crear usuario owner si se proporcionaron credenciales ──
+    if (form.ownerEmail && form.ownerPassword && form.ownerFullName) {
+      const tenantSlug = result.data.slug;
+      const userResult = await createUser({
+        email: form.ownerEmail,
+        password: form.ownerPassword,
+        fullName: form.ownerFullName,
+        role: "business_owner",
+        tenantSlug,
+      });
+      if (!userResult.ok) {
+        setError(`Negocio creado, pero error al crear usuario: ${userResult.error}`);
+        setIsSubmitting(false);
+        return;
+      }
+    }
+
     setTenants((current) => [mapApiTenant(result.data as TenantApiData), ...current]);
     setForm(INITIAL_FORM);
     setShowCreateModal(false);
     setIsSubmitting(false);
+  }
+
+  async function handleDeleteTenant(slug: string, name: string) {
+    if (!confirm(`¿Eliminar permanentemente "${name}"? Esta acción no se puede deshacer.`)) return;
+    const result = await deleteTenant(slug);
+    if (result.ok) {
+      setTenants((current) => current.filter((t) => t.slug !== slug));
+    } else {
+      alert(`Error: ${result.error}`);
+    }
+  }
+
+  async function handleToggleStatus(slug: string, currentStatus: string) {
+    const newStatus = currentStatus === "active" ? "suspended" : "active";
+    const result = await setTenantStatus(slug, newStatus);
+    if (result.ok) {
+      setTenants((current) =>
+        current.map((t) => (t.slug === slug ? { ...t, status: newStatus as Tenant["status"] } : t))
+      );
+    } else {
+      alert(`Error: ${result.error}`);
+    }
+  }
+
+  function openEditModal(tenant: Tenant) {
+    setEditingSlug(tenant.slug);
+    setEditPlan(tenant.plan);
+    setEditFeatured(tenant.featured);
+    setEditError(null);
+  }
+
+  async function handleSaveEdit() {
+    if (!editingSlug) return;
+    setIsSavingEdit(true);
+    setEditError(null);
+
+    const planResult = await changeTenantPlan(editingSlug, editPlan);
+    if (!planResult.ok) {
+      setEditError(`Error al cambiar plan: ${planResult.error}`);
+      setIsSavingEdit(false);
+      return;
+    }
+
+    const featuredResult = await setTenantFeatured(editingSlug, editFeatured);
+    if (!featuredResult.ok) {
+      setEditError(`Error al cambiar destacado: ${featuredResult.error}`);
+      setIsSavingEdit(false);
+      return;
+    }
+
+    setTenants((current) =>
+      current.map((t) =>
+        t.slug === editingSlug ? { ...t, plan: editPlan, featured: editFeatured } : t
+      )
+    );
+    setEditingSlug(null);
+    setIsSavingEdit(false);
+  }
+
+  async function handleQuickToggleFeatured(slug: string, currentFeatured: boolean) {
+    const newFeatured = !currentFeatured;
+    const result = await setTenantFeatured(slug, newFeatured);
+    if (result.ok) {
+      setTenants((current) =>
+        current.map((t) => (t.slug === slug ? { ...t, featured: newFeatured } : t))
+      );
+    } else {
+      alert(`Error: ${result.error}`);
+    }
   }
 
   return (
@@ -163,6 +268,17 @@ export default function AdminCompaniesPage() {
               <input value={form.lat} onChange={(e) => setForm((current) => ({ ...current, lat: e.target.value }))} placeholder="Latitud" className="rounded-2xl border border-slate-200 px-4 py-3 outline-none" />
               <input value={form.lng} onChange={(e) => setForm((current) => ({ ...current, lng: e.target.value }))} placeholder="Longitud" className="rounded-2xl border border-slate-200 px-4 py-3 outline-none" />
 
+              {/* ── Credenciales del owner ── */}
+              <div className="md:col-span-2 mt-2 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                <p className="mb-3 text-sm font-semibold text-ink">Credenciales del administrador del negocio</p>
+                <div className="grid gap-3 md:grid-cols-3">
+                  <input value={form.ownerFullName} onChange={(e) => setForm((current) => ({ ...current, ownerFullName: e.target.value }))} placeholder="Nombre completo" className="rounded-xl border border-slate-200 bg-white px-4 py-3 outline-none" />
+                  <input type="email" value={form.ownerEmail} onChange={(e) => setForm((current) => ({ ...current, ownerEmail: e.target.value }))} placeholder="Email" className="rounded-xl border border-slate-200 bg-white px-4 py-3 outline-none" />
+                  <input type="text" value={form.ownerPassword} onChange={(e) => setForm((current) => ({ ...current, ownerPassword: e.target.value }))} placeholder="Contraseña" className="rounded-xl border border-slate-200 bg-white px-4 py-3 outline-none" />
+                </div>
+                <p className="mt-2 text-xs text-slate-400">Se creará automáticamente un usuario con rol business_owner para este negocio.</p>
+              </div>
+
               {error ? <p className="text-sm text-rose-600 md:col-span-2">{error}</p> : null}
 
               <div className="flex justify-end gap-3 md:col-span-2">
@@ -174,6 +290,69 @@ export default function AdminCompaniesPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      ) : null}
+
+      {editingSlug ? (
+        <div className="fixed inset-0 z-30 flex items-center justify-center bg-slate-950/45 px-4 py-10 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-[2rem] bg-white p-6 shadow-2xl">
+            <div className="mb-6 flex items-start justify-between gap-4">
+              <div>
+                <p className="text-sm uppercase tracking-[0.28em] text-slate-400">Editar negocio</p>
+                <h2 className="mt-2 text-2xl font-semibold text-ink">{editingSlug}</h2>
+              </div>
+              <button type="button" onClick={() => setEditingSlug(null)} className="rounded-full border border-slate-200 p-2 text-slate-500">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="space-y-5">
+              <div>
+                <label htmlFor="edit-plan-select" className="mb-2 block text-sm font-medium text-ink">Plan</label>
+                <select
+                  id="edit-plan-select"
+                  value={editPlan}
+                  onChange={(e) => setEditPlan(e.target.value as TenantPlan)}
+                  className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none"
+                >
+                  <option value="free">Free</option>
+                  <option value="starter">Starter</option>
+                  <option value="premium">Premium</option>
+                  <option value="enterprise">Enterprise</option>
+                </select>
+                <p className="mt-1 text-xs text-slate-400">Cambia el plan de suscripción del negocio.</p>
+              </div>
+
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold text-ink">Destacado en home</p>
+                    <p className="text-xs text-slate-400">Mostrar este negocio en la sección destacada de la página principal.</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setEditFeatured((v) => !v)}
+                    aria-pressed={editFeatured}
+                    aria-label="Toggle destacado"
+                    className={`relative h-7 w-12 rounded-full transition-colors ${editFeatured ? "bg-amber-500" : "bg-slate-300"}`}
+                  >
+                    <span className={`absolute top-1 h-5 w-5 rounded-full bg-white transition-transform ${editFeatured ? "translate-x-6" : "translate-x-1"}`} />
+                  </button>
+                </div>
+              </div>
+
+              {editError ? <p className="text-sm text-rose-600">{editError}</p> : null}
+
+              <div className="flex justify-end gap-3">
+                <button type="button" onClick={() => setEditingSlug(null)} className="rounded-2xl border border-slate-200 px-5 py-3 text-sm font-medium text-slate-600">
+                  Cancelar
+                </button>
+                <button type="button" onClick={handleSaveEdit} disabled={isSavingEdit} className="rounded-2xl bg-ink px-5 py-3 text-sm font-medium text-white disabled:opacity-60">
+                  {isSavingEdit ? "Guardando..." : "Guardar cambios"}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       ) : null}
@@ -264,14 +443,56 @@ export default function AdminCompaniesPage() {
 
               {/* Footer */}
               <div className="mt-4 flex items-center justify-between">
-                <StatusBadge status={tenant.plan} type="plan" />
-                <a
-                  href={`/${tenant.slug}`}
-                  className="text-xs font-medium text-ocean hover:underline"
-                  target="_blank"
-                >
-                  Ver tienda →
-                </a>
+                <div className="flex items-center gap-2">
+                  <StatusBadge status={tenant.plan} type="plan" />
+                  {tenant.featured ? (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700">
+                      <Sparkles className="h-3 w-3" />
+                      Destacado
+                    </span>
+                  ) : null}
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleQuickToggleFeatured(tenant.slug, tenant.featured)}
+                    className={`rounded-lg border p-2 hover:bg-amber-50 ${tenant.featured ? "border-amber-300 text-amber-500" : "border-slate-200 text-slate-400"}`}
+                    title={tenant.featured ? "Quitar destacado" : "Destacar en home"}
+                  >
+                    <Sparkles className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => openEditModal(tenant)}
+                    className="rounded-lg border border-slate-200 p-2 text-slate-500 hover:bg-slate-50"
+                    title="Editar plan y destacado"
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleToggleStatus(tenant.slug, tenant.status)}
+                    className="rounded-lg border border-slate-200 p-2 text-slate-500 hover:bg-slate-50"
+                    title={tenant.status === "active" ? "Suspender" : "Activar"}
+                  >
+                    <Power className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteTenant(tenant.slug, tenant.name)}
+                    className="rounded-lg border border-rose-200 p-2 text-rose-500 hover:bg-rose-50"
+                    title="Eliminar"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                  <a
+                    href={`/${tenant.slug}`}
+                    className="text-xs font-medium text-ocean hover:underline"
+                    target="_blank"
+                  >
+                    Ver tienda →
+                  </a>
+                </div>
               </div>
             </motion.div>
           ))}

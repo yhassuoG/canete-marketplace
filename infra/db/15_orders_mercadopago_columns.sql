@@ -8,6 +8,8 @@
 -- Fecha: 2026-07-31
 -- =============================================================================
 
+SET search_path TO canete_marketplace, public;
+
 -- Columnas de Mercado Pago en orders
 ALTER TABLE orders
     ADD COLUMN IF NOT EXISTS mp_preference_id  VARCHAR(100),

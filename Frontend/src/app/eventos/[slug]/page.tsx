@@ -35,7 +35,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 const FALLBACK_IMAGE =
-  "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=1200&q=70";
+  "https://picsum.photos/seed/canete-event/1200/800";
 
 export default async function EventoDetailPage({ params }: Readonly<PageProps>) {
   const { slug } = await params;

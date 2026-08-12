@@ -1,7 +1,11 @@
+"use client";
+
 import { MapPin, Star, Users } from "lucide-react";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 
 import { Business, featuredBusinesses } from "@/lib/data";
+import { fetchFeaturedTenants, type TenantApiData } from "@/lib/api";
 
 const tierBorder: Record<Business["adTier"], string> = {
   premium: "border-brand-400/50 ring-1 ring-brand-300/30",
@@ -15,13 +19,49 @@ const tierBadge: Record<Business["adTier"], string> = {
   basico: "bg-slate-100 text-slate-500",
 };
 
+/** Map a TenantApiData from the API to the Business card shape. */
+function tenantToBusiness(t: TenantApiData): Business {
+  const planToTier = (plan: string): Business["adTier"] => {
+    if (plan === "premium" || plan === "enterprise") return "premium";
+    if (plan === "starter") return "destacado";
+    return "basico";
+  };
+  return {
+    name: t.name,
+    category: t.category,
+    location: t.location,
+    score: t.rating,
+    reviews: t.reviewCount,
+    tenantSlug: t.slug,
+    accent: "from-slate-700 to-slate-900",
+    adTier: planToTier(t.plan),
+    tagline: t.tagline || t.description?.slice(0, 80) || "",
+    priceFrom: 20,
+    image: "",
+    imageUrl: t.bannerUrl ?? undefined,
+    badge: t.plan.charAt(0).toUpperCase() + t.plan.slice(1),
+  };
+}
+
 function BusinessCard({ business }: Readonly<{ business: Business }>) {
   return (
     <article
       className={`group relative flex flex-col overflow-hidden rounded-3xl border bg-white shadow-soft transition hover:-translate-y-1 hover:shadow-card ${tierBorder[business.adTier]}`}
     >
       {/* Image / gradient header */}
-      <div className={`relative h-40 bg-gradient-to-br ${business.accent}`}>
+      <div
+        className={`relative h-40 bg-gradient-to-br ${business.accent}`}
+        style={
+          business.imageUrl
+            ? {
+                backgroundImage: `url(${business.imageUrl})`,
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+              }
+            : undefined
+        }
+      >
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
         {business.badge && (
           <div
             className={`absolute left-3 top-3 rounded-full px-3 py-1 text-xs font-bold ${tierBadge[business.adTier]}`}
@@ -34,10 +74,10 @@ function BusinessCard({ business }: Readonly<{ business: Business }>) {
           {business.score}
         </div>
         <div className="absolute bottom-3 left-3 right-3">
-          <p className="text-xs font-medium uppercase tracking-widest text-slate-500">
+          <p className="text-xs font-medium uppercase tracking-widest text-white/90">
             {business.category}
           </p>
-          <h3 className="mt-0.5 text-xl font-bold text-brand-900">{business.name}</h3>
+          <h3 className="mt-0.5 text-xl font-bold text-white drop-shadow-sm">{business.name}</h3>
         </div>
       </div>
 
@@ -64,7 +104,7 @@ function BusinessCard({ business }: Readonly<{ business: Business }>) {
             </p>
           </div>
           <Link
-            href={`/marketplace`}
+            href={`/${business.tenantSlug}`}
             className="rounded-xl bg-brand-800 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-900"
           >
             Ver negocio
@@ -76,9 +116,24 @@ function BusinessCard({ business }: Readonly<{ business: Business }>) {
 }
 
 export function BusinessSpotlight() {
+  const [businesses, setBusinesses] = useState<Business[]>(featuredBusinesses);
+
+  useEffect(() => {
+    let active = true;
+    async function load() {
+      const featured = await fetchFeaturedTenants();
+      if (!active || featured.length === 0) return;
+      setBusinesses(featured.map(tenantToBusiness));
+    }
+    void load();
+    return () => {
+      active = false;
+    };
+  }, []);
+
   // Sort by tier: premium first, then destacado, then basico
   const tierOrder = { premium: 0, destacado: 1, basico: 2 };
-  const sorted = [...featuredBusinesses].sort(
+  const sorted = [...businesses].sort(
     (a, b) => tierOrder[a.adTier] - tierOrder[b.adTier]
   );
 

@@ -20,7 +20,7 @@ interface Props {
 }
 
 const FALLBACK_IMAGE =
-  "https://images.unsplash.com/photo-1583212292454-39d2ba9d9614?auto=format&fit=crop&w=1200&q=70";
+  "https://picsum.photos/seed/canete-district/1200/800";
 
 function formatDate(value: string) {
   try {

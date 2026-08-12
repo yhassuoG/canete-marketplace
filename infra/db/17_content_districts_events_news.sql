@@ -5,6 +5,10 @@
 -- Ejecutar después de 16_zelita_tenant.sql
 -- =============================================================================
 
+-- IMPORTANTE (Windows): Este archivo contiene caracteres UTF-8 (ñ, á, etc.).
+-- En Windows, psql usa client_encoding=WIN1252 por defecto, lo que causa doble
+-- encoding (mojibake) al aplicar migraciones. Forzamos UTF-8 aquí:
+SET client_encoding TO 'UTF8';
 SET search_path TO canete_marketplace, public;
 
 -- =============================================================================

@@ -13,16 +13,9 @@
 SET search_path TO canete_marketplace, public;
 
 -- =============================================================================
--- 1. Agregar 'free' y 'trial' al enum plan_name
+-- 1. Planes 'free' y 'trial' (plan_name era enum pero se convirtió a VARCHAR en migración 05)
+--    No se necesita ALTER TYPE porque plans.name ya es VARCHAR(20).
 -- =============================================================================
-
-DO $$ BEGIN
-    ALTER TYPE plan_name ADD VALUE IF NOT EXISTS 'free' BEFORE 'starter';
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;
-
-DO $$ BEGIN
-    ALTER TYPE plan_name ADD VALUE IF NOT EXISTS 'trial' BEFORE 'free';
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- =============================================================================
 -- 2. Agregar campos a plans para trial y MP
@@ -75,7 +68,7 @@ CREATE TABLE IF NOT EXISTS tenant_subscriptions (
     id                  UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id           UUID         NOT NULL UNIQUE REFERENCES tenants(id) ON DELETE CASCADE,
     -- Plan actual (free, starter, pro, enterprise). 'trial' es temporal.
-    current_plan        plan_name    NOT NULL DEFAULT 'trial',
+    current_plan        VARCHAR(20) NOT NULL DEFAULT 'trial',
     -- Trial tracking
     trial_started_at    TIMESTAMPTZ,
     trial_ends_at       TIMESTAMPTZ,
