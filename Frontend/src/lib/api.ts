@@ -111,7 +111,8 @@ export async function fetchTenants(options?: RequestInit): Promise<TenantApiData
     });
     if (!res.ok) return [];
     return (await res.json()) as TenantApiData[];
-  } catch {
+  } catch (err) {
+    if (err instanceof Error && (err as Error & { digest?: string }).digest === "DYNAMIC_SERVER_USAGE") throw err;
     return [];
   }
 }
@@ -888,25 +889,14 @@ export interface EventApiData {
 export async function fetchDistricts(): Promise<DistrictApiData[]> {
   try {
     const url = `${API_BASE}/api/v1/content/districts`;
-    if (typeof window === "undefined") {
-      console.log(`[fetchDistricts] SSR fetching from: ${url}`);
-    }
     const res = await fetch(url, {
       cache: typeof window === "undefined" ? "no-store" : "no-store",
     });
-    if (typeof window === "undefined") {
-      console.log(`[fetchDistricts] SSR response status: ${res.status}`);
-    }
     if (!res.ok) return [];
-    const data = (await res.json()) as DistrictApiData[];
-    if (typeof window === "undefined") {
-      console.log(`[fetchDistricts] SSR got ${data.length} districts`);
-    }
-    return data;
+    return (await res.json()) as DistrictApiData[];
   } catch (err) {
-    if (typeof window === "undefined") {
-      console.error(`[fetchDistricts] SSR error:`, err);
-    }
+    // Re-throw Next.js dynamic server usage errors so the route is rendered dynamically
+    if (err instanceof Error && (err as Error & { digest?: string }).digest === "DYNAMIC_SERVER_USAGE") throw err;
     return [];
   }
 }
@@ -928,11 +918,12 @@ export async function fetchDistrict(slug: string): Promise<DistrictApiData | nul
 export async function fetchNews(): Promise<NewsApiData[]> {
   try {
     const res = await fetch(`${API_BASE}/api/v1/content/news`, {
-      cache: typeof window === "undefined" ? "force-cache" : "no-store",
+      cache: typeof window === "undefined" ? "no-store" : "no-store",
     });
     if (!res.ok) return [];
     return (await res.json()) as NewsApiData[];
-  } catch {
+  } catch (err) {
+    if (err instanceof Error && (err as Error & { digest?: string }).digest === "DYNAMIC_SERVER_USAGE") throw err;
     return [];
   }
 }
@@ -941,11 +932,12 @@ export async function fetchNews(): Promise<NewsApiData[]> {
 export async function fetchNewsBySlug(slug: string): Promise<NewsApiData | null> {
   try {
     const res = await fetch(`${API_BASE}/api/v1/content/news/${slug}`, {
-      cache: typeof window === "undefined" ? "force-cache" : "no-store",
+      cache: typeof window === "undefined" ? "no-store" : "no-store",
     });
     if (!res.ok) return null;
     return (await res.json()) as NewsApiData;
-  } catch {
+  } catch (err) {
+    if (err instanceof Error && (err as Error & { digest?: string }).digest === "DYNAMIC_SERVER_USAGE") throw err;
     return null;
   }
 }
@@ -954,11 +946,12 @@ export async function fetchNewsBySlug(slug: string): Promise<NewsApiData | null>
 export async function fetchEvents(): Promise<EventApiData[]> {
   try {
     const res = await fetch(`${API_BASE}/api/v1/content/events`, {
-      cache: typeof window === "undefined" ? "force-cache" : "no-store",
+      cache: typeof window === "undefined" ? "no-store" : "no-store",
     });
     if (!res.ok) return [];
     return (await res.json()) as EventApiData[];
-  } catch {
+  } catch (err) {
+    if (err instanceof Error && (err as Error & { digest?: string }).digest === "DYNAMIC_SERVER_USAGE") throw err;
     return [];
   }
 }
@@ -967,11 +960,12 @@ export async function fetchEvents(): Promise<EventApiData[]> {
 export async function fetchEventBySlug(slug: string): Promise<EventApiData | null> {
   try {
     const res = await fetch(`${API_BASE}/api/v1/content/events/${slug}`, {
-      cache: typeof window === "undefined" ? "force-cache" : "no-store",
+      cache: typeof window === "undefined" ? "no-store" : "no-store",
     });
     if (!res.ok) return null;
     return (await res.json()) as EventApiData;
-  } catch {
+  } catch (err) {
+    if (err instanceof Error && (err as Error & { digest?: string }).digest === "DYNAMIC_SERVER_USAGE") throw err;
     return null;
   }
 }

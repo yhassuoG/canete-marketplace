@@ -15,6 +15,8 @@ import {
   type TenantApiData,
 } from "@/lib/api";
 
+export const dynamic = "force-dynamic";
+
 interface Props {
   params: Promise<{ slug: string }>;
 }

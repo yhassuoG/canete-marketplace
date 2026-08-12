@@ -12,6 +12,8 @@ import { SiteHeader } from "@/components/layout/site-header";
 import { adPlans } from "@/lib/data";
 import { fetchDistricts, fetchEvents, fetchNews } from "@/lib/api";
 
+export const dynamic = "force-dynamic";
+
 export default async function Home() {
   const [districts, news, events] = await Promise.all([
     fetchDistricts(),
