@@ -172,7 +172,7 @@ export default function AdminCompaniesPage() {
   function openEditModal(tenant: Tenant) {
     setEditingSlug(tenant.slug);
     setEditPlan(tenant.plan);
-    setEditFeatured(tenant.featured);
+    setEditFeatured(tenant.featured ?? false);
     setEditError(null);
   }
 
@@ -455,7 +455,7 @@ export default function AdminCompaniesPage() {
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
-                    onClick={() => handleQuickToggleFeatured(tenant.slug, tenant.featured)}
+                    onClick={() => handleQuickToggleFeatured(tenant.slug, tenant.featured ?? false)}
                     className={`rounded-lg border p-2 hover:bg-amber-50 ${tenant.featured ? "border-amber-300 text-amber-500" : "border-slate-200 text-slate-400"}`}
                     title={tenant.featured ? "Quitar destacado" : "Destacar en home"}
                   >
