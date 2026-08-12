@@ -68,7 +68,15 @@ export async function middleware(request: NextRequest) {
     }
 
     try {
-      const user = JSON.parse(decodeURIComponent(authCookie.value)) as { role: string };
+      // Next.js cookie values are already decoded, so we parse directly.
+      // Some older cookies may be URI-encoded, so we handle both cases.
+      let raw = authCookie.value;
+      let user: { role: string };
+      try {
+        user = JSON.parse(raw) as { role: string };
+      } catch {
+        user = JSON.parse(decodeURIComponent(raw)) as { role: string };
+      }
       // Business users cannot access /admin
       if (pathname.startsWith("/admin") && user.role !== "admin") {
         const url = request.nextUrl.clone();

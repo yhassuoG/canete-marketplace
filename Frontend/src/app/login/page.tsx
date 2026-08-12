@@ -102,7 +102,11 @@ export default function LoginPage() {
         gradient,
       };
       setAuthCookie(user);
-      router.push(user.role === "admin" ? "/admin" : "/dashboard");
+      const target = user.role === "admin" ? "/admin" : "/dashboard";
+      // Reset loading before navigation so the button doesn't stay stuck
+      // in the disabled state while the next route compiles (dev mode).
+      setLoading(false);
+      router.push(target);
     } catch {
       setError("No se pudo conectar con el servidor. Verifica que la API esté activa.");
       setLoading(false);

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Search, Filter, Plus, Building2, Star, X, Trash2, Power, Pencil, Sparkles } from "lucide-react";
+import { Search, Filter, Plus, Building2, Star, X, Trash2, Power, Pencil, Sparkles, ImagePlus, Upload } from "lucide-react";
 import {
   createTenant,
   fetchTenants,
@@ -11,6 +11,8 @@ import {
   changeTenantPlan,
   setTenantFeatured,
   createUser,
+  uploadTenantBanner,
+  uploadTenantLogo,
   type TenantApiData,
 } from "@/lib/api";
 import { StatusBadge } from "@/components/ui/status-badge";
@@ -78,6 +80,10 @@ export default function AdminCompaniesPage() {
   const [editFeatured, setEditFeatured] = useState(false);
   const [isSavingEdit, setIsSavingEdit] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
+  // Image upload state: map slug → { bannerUrl, logoUrl }
+  const [tenantImages, setTenantImages] = useState<Record<string, { bannerUrl: string | null; logoUrl: string | null }>>({});
+  const [uploadingSlug, setUploadingSlug] = useState<string | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -88,6 +94,12 @@ export default function AdminCompaniesPage() {
         return;
       }
       setTenants(apiTenants.map(mapApiTenant));
+      // Load banner/logo URLs from API data
+      const images: Record<string, { bannerUrl: string | null; logoUrl: string | null }> = {};
+      for (const t of apiTenants) {
+        images[t.slug] = { bannerUrl: t.bannerUrl, logoUrl: t.logoUrl };
+      }
+      setTenantImages(images);
     }
 
     void loadTenants();
@@ -213,6 +225,36 @@ export default function AdminCompaniesPage() {
       );
     } else {
       alert(`Error: ${result.error}`);
+    }
+  }
+
+  async function handleUploadBanner(slug: string, file: File) {
+    setUploadingSlug(slug);
+    setUploadError(null);
+    const url = await uploadTenantBanner(slug, file);
+    setUploadingSlug(null);
+    if (url) {
+      setTenantImages((prev) => ({
+        ...prev,
+        [slug]: { ...prev[slug], bannerUrl: url },
+      }));
+    } else {
+      setUploadError(`Error al subir el banner de ${slug}`);
+    }
+  }
+
+  async function handleUploadLogo(slug: string, file: File) {
+    setUploadingSlug(slug);
+    setUploadError(null);
+    const url = await uploadTenantLogo(slug, file);
+    setUploadingSlug(null);
+    if (url) {
+      setTenantImages((prev) => ({
+        ...prev,
+        [slug]: { ...prev[slug], logoUrl: url },
+      }));
+    } else {
+      setUploadError(`Error al subir el logo de ${slug}`);
     }
   }
 
@@ -357,6 +399,12 @@ export default function AdminCompaniesPage() {
         </div>
       ) : null}
 
+      {uploadError ? (
+        <div className="mx-8 mt-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+          {uploadError}
+        </div>
+      ) : null}
+
       <div className="p-8 space-y-6">
         {/* Filters */}
         <div className="flex flex-wrap items-center gap-3">
@@ -397,20 +445,82 @@ export default function AdminCompaniesPage() {
               transition={{ delay: i * 0.06, ease: [0.22, 1, 0.36, 1] }}
               className="group cursor-pointer rounded-3xl border border-slate-100 bg-white p-6 shadow-soft transition-shadow hover:shadow-card-hover"
             >
-              {/* Hero bar */}
-              <div
-                className="mb-5 h-2 rounded-full"
-                style={{ background: tenant.theme.gradient }}
-              />
+              {/* Banner image (or gradient fallback) with upload */}
+              <div className="relative mb-4 h-28 overflow-hidden rounded-2xl">
+                {tenantImages[tenant.slug]?.bannerUrl ? (
+                  <img
+                    src={tenantImages[tenant.slug]!.bannerUrl!}
+                    alt={`Banner ${tenant.name}`}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div
+                    className="h-full w-full"
+                    style={{ background: tenant.theme.gradient }}
+                  />
+                )}
+                <label
+                  className="absolute bottom-2 right-2 flex cursor-pointer items-center gap-1 rounded-lg bg-black/60 px-2 py-1 text-[10px] font-medium text-white backdrop-blur hover:bg-black/80"
+                  title="Subir banner"
+                >
+                  {uploadingSlug === tenant.slug ? (
+                    <span>Subiendo…</span>
+                  ) : (
+                    <>
+                      <ImagePlus className="h-3 w-3" />
+                      <span>Banner</span>
+                    </>
+                  )}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    disabled={uploadingSlug === tenant.slug}
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) handleUploadBanner(tenant.slug, f);
+                      e.target.value = "";
+                    }}
+                  />
+                </label>
+              </div>
 
               {/* Name + badges */}
               <div className="flex items-start justify-between gap-3 mb-4">
                 <div className="flex items-center gap-3">
-                  <div
-                    className="flex h-10 w-10 items-center justify-center rounded-xl text-xl"
-                    style={{ background: tenant.theme.gradient }}
-                  >
-                    <Building2 className="h-5 w-5 text-white" />
+                  {/* Logo (or gradient fallback) with upload */}
+                  <div className="relative">
+                    {tenantImages[tenant.slug]?.logoUrl ? (
+                      <img
+                        src={tenantImages[tenant.slug]!.logoUrl!}
+                        alt={`Logo ${tenant.name}`}
+                        className="h-10 w-10 rounded-xl object-cover"
+                      />
+                    ) : (
+                      <div
+                        className="flex h-10 w-10 items-center justify-center rounded-xl"
+                        style={{ background: tenant.theme.gradient }}
+                      >
+                        <Building2 className="h-5 w-5 text-white" />
+                      </div>
+                    )}
+                    <label
+                      className="absolute -bottom-1 -right-1 flex cursor-pointer items-center justify-center rounded-full bg-white p-0.5 shadow ring-1 ring-slate-200 hover:bg-slate-50"
+                      title="Subir logo"
+                    >
+                      <Upload className="h-3 w-3 text-slate-500" />
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        disabled={uploadingSlug === tenant.slug}
+                        onChange={(e) => {
+                          const f = e.target.files?.[0];
+                          if (f) handleUploadLogo(tenant.slug, f);
+                          e.target.value = "";
+                        }}
+                      />
+                    </label>
                   </div>
                   <div>
                     <h2 className="font-semibold text-ink">{tenant.name}</h2>
