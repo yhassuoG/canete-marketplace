@@ -121,6 +121,17 @@ jobs:
             docker image ls | head -10
             
             echo ""
+            echo "=== DEBUG: SSR API connectivity ==="
+            echo "--- web container env ---"
+            docker exec canete-web-1 env 2>/dev/null | grep -E "API_BACKEND|NEXT_PUBLIC|NODE_ENV" || echo "  (no matching env vars)"
+            echo "--- fetch http://api:8080/api/v1/content/districts from web container ---"
+            docker exec canete-web-1 wget -q -O- --timeout=5 http://api:8080/api/v1/content/districts 2>&1 | head -c 200 || echo "  FAILED to fetch from api:8080"
+            echo ""
+            echo "--- fetch http://localhost:8080/api/v1/content/districts from web container ---"
+            docker exec canete-web-1 wget -q -O- --timeout=5 http://localhost:8080/api/v1/content/districts 2>&1 | head -c 200 || echo "  FAILED to fetch from localhost:8080"
+            echo ""
+            
+            echo ""
             echo "=== Limpieza ==="
             docker image prune -f
           EOF
