@@ -887,12 +887,26 @@ export interface EventApiData {
 /** Lista los distritos de la provincia de Cañete (datos reales de la BD). */
 export async function fetchDistricts(): Promise<DistrictApiData[]> {
   try {
-    const res = await fetch(`${API_BASE}/api/v1/content/districts`, {
-      cache: typeof window === "undefined" ? "force-cache" : "no-store",
+    const url = `${API_BASE}/api/v1/content/districts`;
+    if (typeof window === "undefined") {
+      console.log(`[fetchDistricts] SSR fetching from: ${url}`);
+    }
+    const res = await fetch(url, {
+      cache: typeof window === "undefined" ? "no-store" : "no-store",
     });
+    if (typeof window === "undefined") {
+      console.log(`[fetchDistricts] SSR response status: ${res.status}`);
+    }
     if (!res.ok) return [];
-    return (await res.json()) as DistrictApiData[];
-  } catch {
+    const data = (await res.json()) as DistrictApiData[];
+    if (typeof window === "undefined") {
+      console.log(`[fetchDistricts] SSR got ${data.length} districts`);
+    }
+    return data;
+  } catch (err) {
+    if (typeof window === "undefined") {
+      console.error(`[fetchDistricts] SSR error:`, err);
+    }
     return [];
   }
 }

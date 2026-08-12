@@ -21,6 +21,7 @@ export default async function DistritosPage() {
   return (
     <div className="min-h-screen">
       <SiteHeader />
+      {/* DEBUG: {districts.length} districts loaded */}
       <main className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 py-8 md:px-6">
         {/* Hero */}
         <section className="rounded-3xl border border-brand-100 bg-hero-nature p-8 shadow-soft md:p-10">
