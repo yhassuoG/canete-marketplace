@@ -94,8 +94,10 @@ jobs:
             # El Caddyfile ya tiene vallecanete.com hardcodeado — no requiere sed
             # Build backend image locally on VPS from source (avoids stale GHCR image)
             docker build -t ghcr.io/yhassuog/canete-api:latest -f Backend/Dockerfile Backend/
-            # Deploy (web builds locally, api uses locally-built image)
-            docker compose -f docker-compose.prod.yml up -d --build
+            # Force rebuild frontend WITHOUT cache (fixes stale .next layer issues)
+            docker compose -f docker-compose.prod.yml build --no-cache web
+            # Deploy (web uses freshly-built image, api uses locally-built image)
+            docker compose -f docker-compose.prod.yml up -d
             # Limpieza de imagenes viejas
             docker image prune -f
           EOF
