@@ -90,15 +90,38 @@ jobs:
       - name: Build and deploy on VPS
         run: |
           ssh ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
+            set -euo pipefail
             cd ${{ secrets.DEPLOY_PATH }}
-            # El Caddyfile ya tiene vallecanete.com hardcodeado — no requiere sed
-            # Build backend image locally on VPS from source (avoids stale GHCR image)
+            
+            echo "=== VERIFICACIÓN PRE-BUILD ==="
+            echo "--- admin-sidebar.tsx (debe tener Distritos/Noticias/Eventos) ---"
+            grep -c "Distritos\|Noticias\|Eventos" Frontend/src/components/admin/admin-sidebar.tsx || echo "❌ FALTAN ITEMS EN SIDEBAR"
+            echo "--- Páginas admin ---"
+            ls -la Frontend/src/app/\(admin\)/admin/districts/page.tsx 2>/dev/null || echo "❌ FALTA districts/page.tsx"
+            ls -la Frontend/src/app/\(admin\)/admin/news/page.tsx 2>/dev/null || echo "❌ FALTA news/page.tsx"
+            ls -la Frontend/src/app/\(admin\)/admin/events/page.tsx 2>/dev/null || echo "❌ FALTA events/page.tsx"
+            echo "--- Migración 17 ---"
+            ls -la infra/db/17_content_districts_events_news.sql 2>/dev/null || echo "❌ FALTA migración 17"
+            
+            echo ""
+            echo "=== BUILD BACKEND ==="
             docker build -t ghcr.io/yhassuog/canete-api:latest -f Backend/Dockerfile Backend/
-            # Force rebuild frontend WITHOUT cache (fixes stale .next layer issues)
+            
+            echo ""
+            echo "=== BUILD FRONTEND (sin cache) ==="
             docker compose -f docker-compose.prod.yml build --no-cache web
-            # Deploy (web uses freshly-built image, api uses locally-built image)
-            docker compose -f docker-compose.prod.yml up -d
-            # Limpieza de imagenes viejas
+            
+            echo ""
+            echo "=== DEPLOY ==="
+            docker compose -f docker-compose.prod.yml up -d --force-recreate web
+            
+            echo ""
+            echo "=== POST-DEPLOY CHECK ==="
+            docker compose -f docker-compose.prod.yml ps
+            docker image ls | head -10
+            
+            echo ""
+            echo "=== Limpieza ==="
             docker image prune -f
           EOF
 
