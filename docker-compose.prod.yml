@@ -7,9 +7,14 @@ services:
   web:
     build:
       context: ./Frontend
+      args:
+        # Build-time: Next.js rewrites proxy /api/* al backend interno de Docker
+        API_BACKEND_URL: http://api:8080
     environment:
       # En produccion el frontend llama a /api/* que Caddy rutea al backend
       NEXT_PUBLIC_API_URL: ${PUBLIC_URL:-https://vallecanete.com}
+      # Runtime: para que getApiBase() en SSR apunte al backend interno
+      API_BACKEND_URL: http://api:8080
     expose:
       - "3000"
     restart: unless-stopped
