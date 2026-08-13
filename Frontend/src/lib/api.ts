@@ -309,6 +309,31 @@ export async function deleteProduct(
   }
 }
 
+/**
+ * Sube una imagen para un producto.
+ * Devuelve la URL pública de la imagen o null si falla.
+ */
+export async function uploadProductImage(
+  tenantSlug: string,
+  productId: string,
+  file: File
+): Promise<string | null> {
+  try {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const res = await fetch(`${API_BASE}/api/v1/catalog/${tenantSlug}/products/${productId}/image`, {
+      method: "POST",
+      body: formData,
+    });
+    if (!res.ok) return null;
+    const data = (await res.json()) as { imageUrl?: string };
+    return data.imageUrl ?? null;
+  } catch {
+    return null;
+  }
+}
+
 // ── Orders ────────────────────────────────────────────────────────────────────
 
 export interface OrderItemApi {

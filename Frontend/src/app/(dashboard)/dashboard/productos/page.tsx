@@ -2,13 +2,14 @@
 
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Package, Plus, Pencil, Trash2, X, Loader2, Check, AlertCircle } from "lucide-react";
+import { Package, Plus, Pencil, Trash2, X, Loader2, Check, AlertCircle, ImagePlus, Upload } from "lucide-react";
 import { getAuthUser } from "@/lib/auth";
 import {
   fetchProducts,
   createProduct,
   updateProduct,
   deleteProduct,
+  uploadProductImage,
   type Product,
   type ProductPayload,
 } from "@/lib/api";
@@ -44,6 +45,8 @@ export default function ProductosPage() {
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const slugRef = useRef("");
 
@@ -185,6 +188,20 @@ export default function ProductosPage() {
     }
   };
 
+  const handleImageUpload = async (productId: string, file: File) => {
+    const slug = slugRef.current;
+    if (!slug) return;
+    setUploadingImage(true);
+    const imageUrl = await uploadProductImage(slug, productId, file);
+    setUploadingImage(false);
+    if (imageUrl) {
+      setProducts(prev => prev.map(p => (p.id === productId ? { ...p, imageUrl } : p)));
+      showToast("Imagen subida");
+    } else {
+      showToast("Error al subir imagen", false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-50">
       <header className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-white/80 px-8 py-4 backdrop-blur">
@@ -237,6 +254,35 @@ export default function ProductosPage() {
                   exit={{ opacity: 0, scale: 0.95 }}
                   className="rounded-3xl border border-slate-100 bg-white p-5 shadow-soft"
                 >
+                  {/* Product image */}
+                  <div className="relative mb-3 aspect-[4/3] overflow-hidden rounded-2xl bg-slate-100">
+                    {p.imageUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={p.imageUrl.startsWith("http") ? p.imageUrl : `${process.env.NEXT_PUBLIC_API_URL}${p.imageUrl}`}
+                        alt={p.name}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center">
+                        <Package className="h-10 w-10 text-slate-300" />
+                      </div>
+                    )}
+                    <button
+                      onClick={() => {
+                        if (fileInputRef.current) {
+                          fileInputRef.current.dataset.productId = p.id;
+                          fileInputRef.current.click();
+                        }
+                      }}
+                      disabled={uploadingImage}
+                      className="absolute bottom-2 right-2 flex items-center gap-1.5 rounded-xl bg-black/60 px-3 py-1.5 text-xs font-medium text-white backdrop-blur transition-colors hover:bg-black/80 disabled:opacity-50"
+                    >
+                      {uploadingImage ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
+                      Subir imagen
+                    </button>
+                  </div>
+
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1">
                       <h3 className="font-semibold text-ink">{p.name}</h3>
@@ -391,12 +437,39 @@ export default function ProductosPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-600 mb-1.5">URL de imagen</label>
+                  <label className="block text-sm font-medium text-slate-600 mb-1.5">Imagen del producto</label>
+                  {form.imageUrl ? (
+                    <div className="relative">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={form.imageUrl.startsWith("http") ? form.imageUrl : `${process.env.NEXT_PUBLIC_API_URL}${form.imageUrl}`}
+                        alt="preview"
+                        className="h-32 w-full rounded-2xl border border-slate-200 object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setForm(f => ({ ...f, imageUrl: "" }))}
+                        className="absolute top-2 right-2 rounded-lg bg-black/60 px-2 py-1 text-xs text-white hover:bg-black/80"
+                      >
+                        Quitar
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex h-32 items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50">
+                      <div className="text-center text-sm text-slate-400">
+                        <ImagePlus className="mx-auto h-6 w-6 mb-1" />
+                        {editingId
+                          ? "Usa el botón \"Subir imagen\" en la tarjeta"
+                          : "Crea el producto y luego sube la imagen"}
+                      </div>
+                    </div>
+                  )}
                   <input
+                    type="text"
                     value={form.imageUrl}
                     onChange={e => setForm(f => ({ ...f, imageUrl: e.target.value }))}
-                    className="w-full rounded-2xl border border-slate-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0c4a6e]/20"
-                    placeholder="https://…"
+                    className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-2.5 text-xs text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0c4a6e]/20"
+                    placeholder="O pega una URL: https://…"
                   />
                 </div>
 
@@ -447,6 +520,22 @@ export default function ProductosPage() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Hidden file input for product image upload */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={e => {
+          const file = e.target.files?.[0];
+          const productId = e.target.dataset.productId;
+          if (file && productId) {
+            handleImageUpload(productId, file);
+          }
+          e.target.value = "";
+        }}
+      />
     </div>
   );
 }
