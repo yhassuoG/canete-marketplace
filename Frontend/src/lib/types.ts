@@ -174,6 +174,7 @@ export interface Product {
   reviewCount: number;
   badge?: "popular" | "new" | "offer";
   available: boolean;
+  imageUrl?: string | null;
 }
 
 // ─── Admin ────────────────────────────────────────────────────────────────────

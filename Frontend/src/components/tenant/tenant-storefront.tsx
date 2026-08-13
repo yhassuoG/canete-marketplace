@@ -587,6 +587,7 @@ export function TenantStorefront({ tenant }: TenantStorefrontProps) {
             rating: 4.5,
             reviewCount: 0,
             available: p.available,
+            imageUrl: p.imageUrl,
           }));
         setProducts(mapped);
       }
@@ -813,8 +814,24 @@ export function TenantStorefront({ tenant }: TenantStorefrontProps) {
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.06, ease: [0.22, 1, 0.36, 1] }}
-                className="group relative overflow-hidden rounded-3xl border border-[var(--tenant-border)] bg-[var(--tenant-surface)] p-5 shadow-sm transition-shadow hover:shadow-soft"
+                className="group relative overflow-hidden rounded-3xl border border-[var(--tenant-border)] bg-[var(--tenant-surface)] shadow-sm transition-shadow hover:shadow-soft"
               >
+                {product.imageUrl ? (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img
+                    src={product.imageUrl}
+                    alt={product.name}
+                    className="h-40 w-full object-cover"
+                  />
+                ) : (
+                  <div
+                    className="flex h-40 w-full items-center justify-center text-4xl"
+                    style={{ background: "var(--tenant-gradient)" }}
+                  >
+                    {product.name.charAt(0).toUpperCase()}
+                  </div>
+                )}
+                <div className="p-5">
                 {product.badge && (
                   <span className={`absolute right-4 top-4 rounded-full px-2.5 py-0.5 text-xs font-semibold ${BADGE_STYLES[product.badge]}`}>
                     {BADGE_LABELS[product.badge]}
@@ -849,6 +866,7 @@ export function TenantStorefront({ tenant }: TenantStorefrontProps) {
                     <ShoppingCart className="h-3.5 w-3.5" />
                     {cart[product.id] ? `Agregado (${cart[product.id]})` : "Agregar"}
                   </button>
+                </div>
                 </div>
               </motion.article>
             ))}

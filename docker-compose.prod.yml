@@ -40,6 +40,8 @@ services:
       MP_API_BASE_URL: https://api.mercadopago.com
       MP_FRONTEND_URL: ${PUBLIC_URL:-https://vallecanete.com}
       MP_WEBHOOK_SECRET: ${MP_WEBHOOK_SECRET:-wh-canete-secret}
+    volumes:
+      - api_uploads:/app/uploads
     expose:
       - "8080"
     depends_on:
@@ -90,3 +92,4 @@ volumes:
   postgres_data:
   caddy_data:
   caddy_config:
+  api_uploads:
