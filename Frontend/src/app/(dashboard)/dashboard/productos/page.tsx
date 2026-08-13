@@ -259,7 +259,7 @@ export default function ProductosPage() {
                     {p.imageUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
-                        src={p.imageUrl.startsWith("http") ? p.imageUrl : `${process.env.NEXT_PUBLIC_API_URL}${p.imageUrl}`}
+                        src={p.imageUrl}
                         alt={p.name}
                         className="h-full w-full object-cover"
                       />
@@ -442,7 +442,7 @@ export default function ProductosPage() {
                     <div className="relative">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
-                        src={form.imageUrl.startsWith("http") ? form.imageUrl : `${process.env.NEXT_PUBLIC_API_URL}${form.imageUrl}`}
+                        src={form.imageUrl}
                         alt="preview"
                         className="h-32 w-full rounded-2xl border border-slate-200 object-cover"
                       />
