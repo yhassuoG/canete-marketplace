@@ -1,12 +1,10 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import {
   ArrowLeft,
-  Package,
   Clock,
   CheckCircle2,
   Truck,
@@ -133,8 +131,7 @@ export default function OrderTrackingPage({
 }: {
   params: Promise<{ orderId: string }>;
 }) {
-  const router = useRouter();
-  const { account, hydrated } = useConsumer();
+  const { account } = useConsumer();
   const [orderId, setOrderId] = useState<string>("");
   const [order, setOrder] = useState<OrderApiResponse | null>(null);
   const [tenant, setTenant] = useState<TenantApiData | null>(null);
@@ -147,12 +144,9 @@ export default function OrderTrackingPage({
     params.then((p) => setOrderId(p.orderId));
   }, [params]);
 
-  // Redirect to login if not logged in
-  useEffect(() => {
-    if (hydrated && !account) {
-      router.replace("/login");
-    }
-  }, [hydrated, account, router]);
+  // Nota: No redirigimos a /login si no hay sesión.
+  // El endpoint GET /api/v1/orders/{orderId} es público, así que el tracking
+  // funciona incluso sin login (útil para compartir el link del pedido).
 
   // Fetch order by ID (endpoint público)
   const fetchOrder = useCallback(async () => {
@@ -202,16 +196,6 @@ export default function OrderTrackingPage({
     return () => clearInterval(interval);
   }, [order, fetchOrder]);
 
-  if (!hydrated || !account) {
-    return (
-      <TenantGoogleProvider>
-        <div className="min-h-screen flex items-center justify-center bg-slate-50">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-200 border-t-orange-500" />
-        </div>
-      </TenantGoogleProvider>
-    );
-  }
-
   if (loading) {
     return (
       <TenantGoogleProvider>
@@ -229,7 +213,7 @@ export default function OrderTrackingPage({
           <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur-lg">
             <div className="mx-auto flex max-w-3xl items-center gap-4 px-4 py-3 sm:px-6">
               <Link
-                href="/mi-cuenta"
+                href={account ? "/mi-cuenta" : "/marketplace"}
                 className="flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-slate-900"
               >
                 <ArrowLeft className="h-4 w-4" />
@@ -244,11 +228,11 @@ export default function OrderTrackingPage({
                 {error ?? "No se encontró el pedido"}
               </p>
               <Link
-                href="/mi-cuenta"
+                href={account ? "/mi-cuenta" : "/marketplace"}
                 className="mt-4 inline-flex items-center gap-2 rounded-xl bg-gradient-to-br from-coral to-orange-500 px-4 py-2 text-sm font-medium text-white"
               >
                 <ArrowLeft className="h-4 w-4" />
-                Ir a Mis pedidos
+                {account ? "Ir a Mis pedidos" : "Ir al marketplace"}
               </Link>
             </div>
           </div>
@@ -274,11 +258,11 @@ export default function OrderTrackingPage({
         <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur-lg">
           <div className="mx-auto flex max-w-3xl items-center gap-4 px-4 py-3 sm:px-6">
             <Link
-              href="/mi-cuenta"
+              href={account ? "/mi-cuenta" : "/marketplace"}
               className="flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-slate-900"
             >
               <ArrowLeft className="h-4 w-4" />
-              Mis pedidos
+              {account ? "Mis pedidos" : "Volver"}
             </Link>
             <div className="flex-1" />
             {!isFinal && (
@@ -589,6 +573,7 @@ export default function OrderTrackingPage({
           <div className="flex items-center justify-between text-xs text-slate-400">
             <span>Última actualización: {lastUpdated.toLocaleTimeString("es-PE")}</span>
             <button
+              type="button"
               onClick={() => fetchOrder()}
               className="flex items-center gap-1 hover:text-slate-600"
             >
