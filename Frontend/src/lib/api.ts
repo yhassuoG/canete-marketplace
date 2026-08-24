@@ -608,6 +608,27 @@ export async function fetchCategoryBreakdown(): Promise<CategoryBreakdownEntry[]
   }
 }
 
+export interface TopTenantEntry {
+  name: string;
+  slug: string;
+  revenue: number;
+  growth: number;
+  plan: string;
+}
+
+/** Obtiene el top de empresas por ingresos. */
+export async function fetchTopTenants(): Promise<TopTenantEntry[]> {
+  try {
+    const res = await fetch(`${API_BASE}/api/analytics/global/top-tenants`, {
+      cache: "no-store",
+    });
+    if (!res.ok) return [];
+    return (await res.json()) as TopTenantEntry[];
+  } catch {
+    return [];
+  }
+}
+
 /** Obtiene las métricas de un negocio por slug. */
 export async function fetchBusinessAnalytics(
   slug: string
