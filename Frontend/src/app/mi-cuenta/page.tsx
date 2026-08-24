@@ -297,7 +297,11 @@ export default function MiCuentaPage() {
                       <div className="px-5 py-8 text-center text-sm text-slate-400">Aún no tienes pedidos</div>
                     ) : (
                       orders.slice(0, 3).map((order) => (
-                        <div key={order.id} className="flex items-center gap-4 px-5 py-3 hover:bg-slate-50 transition">
+                        <Link
+                          key={order.id}
+                          href={`/mi-cuenta/pedidos/${order.id}`}
+                          className="flex items-center gap-4 px-5 py-3 hover:bg-slate-50 transition"
+                        >
                           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-lg">
                             🧾
                           </div>
@@ -309,7 +313,7 @@ export default function MiCuentaPage() {
                             {statusLabel(order.status)}
                           </span>
                           <p className="text-sm font-semibold text-slate-800">S/.{order.total.toFixed(2)}</p>
-                        </div>
+                        </Link>
                       ))
                     )}
                   </div>
@@ -376,7 +380,7 @@ export default function MiCuentaPage() {
                     const tenant = tenantMap[order.tenantId];
                     return (
                       <div key={order.id} className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
-                        <div className="flex items-center gap-4 border-b border-slate-100 px-5 py-3">
+                        <Link href={`/mi-cuenta/pedidos/${order.id}`} className="flex items-center gap-4 border-b border-slate-100 px-5 py-3 transition hover:bg-slate-50">
                           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-lg">
                             🧾
                           </div>
@@ -387,7 +391,7 @@ export default function MiCuentaPage() {
                           <span className={`rounded-full border px-2.5 py-1 text-xs font-medium ${statusColor(order.status)}`}>
                             {statusLabel(order.status)}
                           </span>
-                        </div>
+                        </Link>
                         <div className="px-5 py-3">
                           <div className="space-y-2">
                             {order.items.map((item, i) => (
@@ -398,12 +402,20 @@ export default function MiCuentaPage() {
                             ))}
                           </div>
                           <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-3">
-                            <Link
-                              href={tenant ? `/${tenant.slug}` : "/marketplace"}
-                              className="flex items-center gap-1 text-xs font-medium text-orange-600 hover:text-orange-700"
-                            >
-                              <Store className="h-3 w-3" /> Ver tienda
-                            </Link>
+                            <div className="flex items-center gap-3">
+                              <Link
+                                href={`/mi-cuenta/pedidos/${order.id}`}
+                                className="flex items-center gap-1 text-xs font-medium text-orange-600 hover:text-orange-700"
+                              >
+                                <Package className="h-3 w-3" /> Ver seguimiento
+                              </Link>
+                              <Link
+                                href={tenant ? `/${tenant.slug}` : "/marketplace"}
+                                className="flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-slate-700"
+                              >
+                                <Store className="h-3 w-3" /> Ver tienda
+                              </Link>
+                            </div>
                             <p className="font-semibold text-slate-800">Total: S/.{order.total.toFixed(2)}</p>
                           </div>
                         </div>
