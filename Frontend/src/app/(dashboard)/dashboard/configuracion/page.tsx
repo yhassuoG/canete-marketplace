@@ -8,7 +8,7 @@ import { getApiBase } from "@/lib/api-base";
 
 const MapPicker = dynamic(() => import("@/components/dashboard/map-picker"), { ssr: false });
 import { motion } from "framer-motion";
-import { Settings, Bell, CreditCard, Shield, Save, Palette, Store, Loader2, ImagePlus, Upload, X } from "lucide-react";
+import { Settings, Bell, Shield, Save, Palette, Store, Loader2, ImagePlus, Upload, X } from "lucide-react";
 
 const API_BASE = getApiBase();
 
@@ -20,7 +20,6 @@ export default function ConfiguracionPage() {
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [notif, setNotif]   = useState({ newReservation: true, newOrder: true, newReview: true, dailySummary: true, weeklySummary: false, lowStock: true });
-  const [payments, setPayments] = useState({ yape: true, plin: true, visa: false, mastercard: false, cash: true });
   const [theme, setTheme]   = useState({ primary: "#0c4a6e", accent: "#f97316", radius: "rounded" });
   const [info, setInfo]     = useState({
     name: "", tagline: "", address: "", phone: "", description: "",
@@ -211,19 +210,6 @@ export default function ConfiguracionPage() {
             <Toggle label="Nueva reseña" desc="Cuando un cliente deja una opinión" checked={notif.newReview} onChange={() => setNotif(p => ({ ...p, newReview: !p.newReview }))}/>
             <Toggle label="Resumen diario" desc="Email con el resumen del día" checked={notif.dailySummary} onChange={() => setNotif(p => ({ ...p, dailySummary: !p.dailySummary }))}/>
             <Toggle label="Resumen semanal" desc="Email cada lunes con la semana" checked={notif.weeklySummary} onChange={() => setNotif(p => ({ ...p, weeklySummary: !p.weeklySummary }))}/>
-          </div>
-        </motion.div>
-
-        {/* Payments */}
-        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-          className="rounded-3xl border border-slate-100 bg-white p-6 shadow-soft">
-          <div className="flex items-center gap-2 mb-4"><CreditCard className="h-4 w-4 text-[#0c4a6e]"/><h3 className="font-semibold text-ink">Métodos de pago aceptados</h3></div>
-          <div className="divide-y divide-slate-50">
-            <Toggle label="Yape" desc="Billetera digital de BCP" checked={payments.yape} onChange={() => setPayments(p => ({ ...p, yape: !p.yape }))}/>
-            <Toggle label="Plin" desc="Billetera digital de Interbank/Scotiabank" checked={payments.plin} onChange={() => setPayments(p => ({ ...p, plin: !p.plin }))}/>
-            <Toggle label="Visa / Débito" checked={payments.visa} onChange={() => setPayments(p => ({ ...p, visa: !p.visa }))}/>
-            <Toggle label="Mastercard" checked={payments.mastercard} onChange={() => setPayments(p => ({ ...p, mastercard: !p.mastercard }))}/>
-            <Toggle label="Efectivo" checked={payments.cash} onChange={() => setPayments(p => ({ ...p, cash: !p.cash }))}/>
           </div>
         </motion.div>
 

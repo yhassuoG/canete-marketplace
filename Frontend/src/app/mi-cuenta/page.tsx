@@ -10,7 +10,6 @@ import {
   Heart,
   Gift,
   MapPin,
-  CreditCard,
   Settings,
   Search,
   Bell,
@@ -44,7 +43,7 @@ function statusColor(status: string): string {
   return STATUS_FLOW[status]?.color ?? "bg-slate-100 text-slate-700 border-slate-200";
 }
 
-type Section = "overview" | "orders" | "favorites" | "rewards" | "addresses" | "payments" | "settings";
+type Section = "overview" | "orders" | "favorites" | "rewards" | "addresses" | "settings";
 
 const NAV_ITEMS: { id: Section; label: string; icon: typeof Package }[] = [
   { id: "overview", label: "Resumen", icon: Sparkles },
@@ -52,7 +51,6 @@ const NAV_ITEMS: { id: Section; label: string; icon: typeof Package }[] = [
   { id: "favorites", label: "Tiendas favoritas", icon: Heart },
   { id: "rewards", label: "Puntos y recompensas", icon: Gift },
   { id: "addresses", label: "Direcciones", icon: MapPin },
-  { id: "payments", label: "Métodos de pago", icon: CreditCard },
   { id: "settings", label: "Configuración", icon: Settings },
 ];
 
@@ -575,40 +573,6 @@ export default function MiCuentaPage() {
                         </div>
                       </div>
                       <p className="mt-2 text-sm text-slate-500">{a.addr}</p>
-                    </div>
-                  ))}
-                </div>
-              </motion.div>
-            )}
-
-            {/* ── PAYMENTS ───────────────────────────────────────────── */}
-            {section === "payments" && (
-              <motion.div
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="space-y-4"
-              >
-                <div className="flex items-center justify-between">
-                  <h1 className="text-xl font-bold text-slate-800">Métodos de pago</h1>
-                  <button className="rounded-xl bg-gradient-to-br from-coral to-orange-500 px-4 py-2 text-sm font-medium text-white">
-                    + Agregar
-                  </button>
-                </div>
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  {[
-                    { label: "Yape", number: "999 123 456", emoji: "📱", color: "bg-green-50" },
-                    { label: "Visa", number: "•••• 4242", emoji: "💳", color: "bg-blue-50" },
-                  ].map((p) => (
-                    <div key={p.label} className={`rounded-2xl border border-slate-200 bg-white p-5`}>
-                      <div className="flex items-center gap-3">
-                        <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${p.color} text-2xl`}>
-                          {p.emoji}
-                        </div>
-                        <div>
-                          <p className="font-medium text-slate-800">{p.label}</p>
-                          <p className="text-xs text-slate-400">{p.number}</p>
-                        </div>
-                      </div>
                     </div>
                   ))}
                 </div>

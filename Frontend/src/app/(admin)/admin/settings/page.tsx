@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Save, Globe, Bell, Mail, Smartphone, CreditCard, Wrench, AlertTriangle } from "lucide-react";
+import { Save, Globe, Bell, Mail, Smartphone, Wrench, AlertTriangle } from "lucide-react";
 import { fetchMaintenanceStatus, setMaintenanceMode } from "@/lib/api";
 
 export default function AdminSettingsPage() {
@@ -21,9 +21,6 @@ export default function AdminSettingsPage() {
     emailEnabled: true,
     smsEnabled: false,
     pushEnabled: true,
-    stripeEnabled: false,
-    yapeEnabled: true,
-    plinEnabled: true,
   });
 
   const handleSave = () => { setSaved(true); setTimeout(() => setSaved(false), 2000); };
@@ -145,12 +142,6 @@ export default function AdminSettingsPage() {
             <Toggle label="Email" name="emailEnabled" desc="Notificaciones por correo electrónico"/>
             <Toggle label="SMS" name="smsEnabled" desc="Mensajes de texto vía Twilio"/>
             <Toggle label="Push notifications" name="pushEnabled" desc="Notificaciones web / PWA"/>
-          </div>
-          <div className="mt-6 flex items-center gap-2"><CreditCard className="h-4 w-4 text-[#083d77]"/><h3 className="font-semibold text-ink">Métodos de pago</h3></div>
-          <div className="mt-2 divide-y divide-slate-50">
-            <Toggle label="Stripe" name="stripeEnabled" desc="Tarjetas de crédito/débito"/>
-            <Toggle label="Yape" name="yapeEnabled" desc="Billetera digital Yape"/>
-            <Toggle label="Plin" name="plinEnabled" desc="Billetera digital Plin"/>
           </div>
         </motion.div>
       </div>
