@@ -70,6 +70,7 @@ jobs:
             MP_PUBLIC_KEY=${{ secrets.MP_PUBLIC_KEY }}
             MP_SANDBOX=${{ secrets.MP_SANDBOX }}
             WHATSAPP_ENABLED=false
+            NEXT_PUBLIC_GOOGLE_CLIENT_ID=${{ secrets.NEXT_PUBLIC_GOOGLE_CLIENT_ID }}
             ENV
           EOF
 

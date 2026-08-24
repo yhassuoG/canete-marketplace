@@ -10,6 +10,8 @@ services:
       args:
         # Build-time: Next.js rewrites proxy /api/* al backend interno de Docker
         API_BACKEND_URL: http://api:8080
+        # Build-time: Google OAuth Client ID (NEXT_PUBLIC_* must be inlined at build time)
+        NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${NEXT_PUBLIC_GOOGLE_CLIENT_ID:-}
     environment:
       # En produccion el frontend llama a /api/* que Caddy rutea al backend
       NEXT_PUBLIC_API_URL: ${PUBLIC_URL:-https://vallecanete.com}

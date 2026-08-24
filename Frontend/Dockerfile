@@ -6,7 +6,9 @@ RUN npm install
 FROM node:22-alpine AS builder
 WORKDIR /app
 ARG API_BACKEND_URL=http://api:8080
+ARG NEXT_PUBLIC_GOOGLE_CLIENT_ID=
 ENV API_BACKEND_URL=$API_BACKEND_URL
+ENV NEXT_PUBLIC_GOOGLE_CLIENT_ID=$NEXT_PUBLIC_GOOGLE_CLIENT_ID
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npm run build
