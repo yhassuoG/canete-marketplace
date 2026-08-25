@@ -644,6 +644,69 @@ export async function fetchBusinessAnalytics(
   }
 }
 
+export interface TenantMonthlyEntry {
+  month: string;
+  sales: number;
+  customers: number;
+  reservations: number;
+}
+
+export interface TenantWeeklyEntry {
+  day: string;
+  sales: number;
+  orders: number;
+}
+
+export interface TenantPeakHourEntry {
+  hour: string;
+  pax: number;
+}
+
+/** Serie mensual de un negocio (últimos 6 meses). */
+export async function fetchTenantMonthlySeries(
+  slug: string
+): Promise<TenantMonthlyEntry[]> {
+  try {
+    const res = await fetch(`${API_BASE}/api/analytics/${slug}/monthly-series`, {
+      cache: "no-store",
+    });
+    if (!res.ok) return [];
+    return (await res.json()) as TenantMonthlyEntry[];
+  } catch {
+    return [];
+  }
+}
+
+/** Serie semanal de un negocio (últimos 7 días). */
+export async function fetchTenantWeeklySeries(
+  slug: string
+): Promise<TenantWeeklyEntry[]> {
+  try {
+    const res = await fetch(`${API_BASE}/api/analytics/${slug}/weekly-series`, {
+      cache: "no-store",
+    });
+    if (!res.ok) return [];
+    return (await res.json()) as TenantWeeklyEntry[];
+  } catch {
+    return [];
+  }
+}
+
+/** Horas pico de un negocio. */
+export async function fetchTenantPeakHours(
+  slug: string
+): Promise<TenantPeakHourEntry[]> {
+  try {
+    const res = await fetch(`${API_BASE}/api/analytics/${slug}/peak-hours`, {
+      cache: "no-store",
+    });
+    if (!res.ok) return [];
+    return (await res.json()) as TenantPeakHourEntry[];
+  } catch {
+    return [];
+  }
+}
+
 // ── Customers ────────────────────────────────────────────────────────────────
 
 export interface CustomerApiData {
