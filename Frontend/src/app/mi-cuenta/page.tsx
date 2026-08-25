@@ -228,9 +228,8 @@ export default function MiCuentaPage() {
         <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur-lg">
           <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-3 sm:px-6">
             <Link href="/marketplace" className="flex items-center gap-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-coral to-orange-500">
-                <span className="text-lg font-bold text-white">C</span>
-              </div>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/logo.webp" alt="Cañete" className="h-9 w-9 rounded-xl object-cover" />
               <span className="hidden font-bold text-slate-800 sm:inline">Cañete</span>
             </Link>
 
