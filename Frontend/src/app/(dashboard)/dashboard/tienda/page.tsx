@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Store, Camera, Plus, X, Clock, MapPin, Phone, Globe } from "lucide-react";
+import { Store, Clock, MapPin, Phone, Globe, Loader2 } from "lucide-react";
+import { getAuthUser } from "@/lib/auth";
+import { fetchTenant, updateTenantConfig, type TenantApiData } from "@/lib/api";
 
 const DEFAULT_HOURS = [
   { day: "Lunes", open: "11:00", close: "22:00", closed: false },
@@ -15,19 +17,64 @@ const DEFAULT_HOURS = [
 ];
 
 export default function TiendaPage() {
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [hours, setHours] = useState(DEFAULT_HOURS);
+  const [tenant, setTenant] = useState<TenantApiData | null>(null);
   const [form, setForm] = useState({
-    name: "Muelle Pacifico",
-    tagline: "El mejor ceviche de Cañete",
-    description: "Restaurante de pescados y mariscos frente al mar. Tradición y sabor desde 1998.",
-    phone: "+51 944 001 001",
-    website: "muellepacifico.com",
-    address: "Malecón San Vicente s/n, San Vicente de Cañete",
-    category: "restaurant",
+    name: "",
+    tagline: "",
+    description: "",
+    phone: "",
+    website: "",
+    address: "",
+    category: "",
   });
 
-  const save = () => { setSaved(true); setTimeout(() => setSaved(false), 2000); };
+  useEffect(() => {
+    const user = getAuthUser();
+    const slug = user?.tenantSlug;
+    if (!slug) { setLoading(false); return; }
+
+    fetchTenant(slug).then((t) => {
+      if (t) {
+        setTenant(t);
+        setForm({
+          name: t.name ?? "",
+          tagline: t.tagline ?? "",
+          description: t.description ?? "",
+          phone: t.phone ?? "",
+          website: "",
+          address: t.address ?? "",
+          category: t.category ?? "",
+        });
+      }
+      setLoading(false);
+    });
+  }, []);
+
+  const save = async () => {
+    if (!tenant) return;
+    setSaving(true);
+    setError(null);
+    const updated = await updateTenantConfig(tenant.slug, {
+      name: form.name,
+      tagline: form.tagline,
+      description: form.description,
+      phone: form.phone,
+      address: form.address,
+    });
+    setSaving(false);
+    if (updated) {
+      setTenant(updated);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } else {
+      setError("No se pudo guardar. Intenta de nuevo.");
+    }
+  };
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -35,11 +82,24 @@ export default function TiendaPage() {
         <div className="flex items-center gap-2"><Store className="h-5 w-5 text-[#0c4a6e]"/>
           <div><h1 className="text-lg font-semibold text-ink">Mi tienda</h1><p className="text-sm text-slate-400">Personaliza la página pública de tu negocio</p></div>
         </div>
-        <button onClick={save} className={`flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold text-white transition-colors ${saved ? "bg-emerald-500" : "bg-[#0c4a6e]"}`}>
-          {saved ? "¡Guardado!" : "Guardar cambios"}
+        <button onClick={save} disabled={saving || loading}
+          className={`flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold text-white transition-colors ${saved ? "bg-emerald-500" : "bg-[#0c4a6e]"} disabled:opacity-50`}>
+          {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+          {saving ? "Guardando…" : saved ? "¡Guardado!" : "Guardar cambios"}
         </button>
       </header>
 
+      {error && (
+        <div className="mx-6 mt-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
+          {error}
+        </div>
+      )}
+
+      {loading ? (
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="h-8 w-8 animate-spin text-[#0c4a6e]" />
+        </div>
+      ) : (
       <div className="p-6 grid gap-6 lg:grid-cols-2">
         {/* Info */}
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="rounded-3xl border border-slate-100 bg-white p-6 shadow-soft space-y-4">
@@ -114,6 +174,7 @@ export default function TiendaPage() {
           </div>
         </motion.div>
       </div>
+      )}
     </div>
   );
 }

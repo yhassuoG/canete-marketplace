@@ -1,0 +1,1 @@
+SELECT c.full_name, c.phone, c.email, c.total_orders, c.total_spent, c.loyalty_points FROM canete_marketplace.customers c JOIN canete_marketplace.tenants t ON c.tenant_id = t.id WHERE t.slug = 'makis' ORDER BY c.total_spent DESC;
