@@ -129,9 +129,8 @@ export default function LoginPage() {
             animate={{ opacity: 1, y: 0 }}
             className="mb-8 flex flex-col items-center"
           >
-            <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-coral to-orange-500 shadow-lg shadow-orange-500/30">
-              <span className="text-2xl font-bold text-white">C</span>
-            </div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo.webp" alt="vallecanete" className="mb-4 h-14 w-14 rounded-2xl object-cover shadow-lg" />
             <h1 className="text-2xl font-bold text-white">vallecanete</h1>
             <p className="mt-1 text-sm text-white/50">Explora, compra y reserva en Cañete</p>
           </motion.div>

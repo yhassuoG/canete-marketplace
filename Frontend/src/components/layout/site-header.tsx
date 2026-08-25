@@ -1,6 +1,6 @@
 "use client";
 
-import { Leaf, Menu, Search, X } from "lucide-react";
+import { Menu, Search, X } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -24,9 +24,8 @@ export function SiteHeader() {
     <header className="sticky top-4 z-30 mx-auto w-full max-w-7xl px-4 md:px-6">
       <div className="flex items-center justify-between rounded-2xl border border-brand-100 bg-white/90 px-4 py-3 shadow-soft backdrop-blur md:px-6">
         <Link href="/" className="flex items-center gap-2">
-          <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-brand-600 to-brand-800 text-white">
-            <Leaf className="h-5 w-5" />
-          </span>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo.webp" alt="ValleCañete" className="h-9 w-9 rounded-xl object-cover" />
           <span className="text-lg font-bold text-brand-900">ValleCañete</span>
         </Link>
 

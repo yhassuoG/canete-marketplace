@@ -1,4 +1,4 @@
-import { Globe, Leaf, MessageCircle } from "lucide-react";
+import { Globe, MessageCircle } from "lucide-react";
 import Link from "next/link";
 
 const COLUMNS: { title: string; links: { label: string; href: string }[] }[] = [
@@ -37,9 +37,8 @@ export function SiteFooter() {
       <div className="grid gap-10 md:grid-cols-[1.3fr_1fr_1fr_1fr]">
         <div>
           <div className="flex items-center gap-2">
-            <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-white/10">
-              <Leaf className="h-5 w-5" />
-            </span>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo.webp" alt="ValleCañete" className="h-9 w-9 rounded-xl object-cover" />
             <span className="text-lg font-bold">ValleCañete</span>
           </div>
           <p className="mt-3 max-w-xs text-sm text-white/70">

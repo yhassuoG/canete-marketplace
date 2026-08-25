@@ -18,6 +18,10 @@ const serif = Fraunces({
 export const metadata: Metadata = {
   title: "vallecanete",
   description: "Marketplace turistico y gastronomico multiempresa para Canete y expansion regional.",
+  icons: {
+    icon: "/logo.webp",
+    apple: "/logo.webp",
+  },
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

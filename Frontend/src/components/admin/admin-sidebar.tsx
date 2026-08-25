@@ -72,9 +72,8 @@ export function AdminSidebar({ userName = "Admin" }: { userName?: string }) {
     <aside className="flex h-full w-64 flex-shrink-0 flex-col bg-admin-sidebar sidebar-scroll overflow-y-auto">
       {/* Logo */}
       <div className="flex items-center gap-3 px-6 py-6 border-b border-white/10">
-        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-coral to-orange-500 shadow-glow-coral">
-          <span className="text-sm font-bold text-white">C</span>
-        </div>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/logo.webp" alt="Cañete" className="h-9 w-9 rounded-xl object-cover" />
         <div>
           <p className="text-sm font-semibold text-white">Cañete</p>
           <p className="text-[10px] uppercase tracking-widest text-white/40">Super Admin</p>
