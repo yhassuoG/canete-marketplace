@@ -30,6 +30,7 @@ import {
 import type { Tenant, Product } from "@/lib/types";
 import { TenantSubscribeButton } from "@/components/tenant/tenant-subscribe-button";
 import { createOrder, createPaymentPreference, fetchProducts as fetchProductsApi, Product as ApiProduct } from "@/lib/api";
+import { getCustomerSession } from "@/lib/customer-session";
 
 const StorefrontLeafletMap = dynamic(
   () => import("@/components/tenant/storefront-leaflet-map"),
@@ -177,8 +178,13 @@ function OrderModal({
     // Para efectivo, flujo directo sin pasarela
     const usingMercadoPago = needsPaymentRef;
 
+    // If customer is logged in (Google), pass their customerId so the order
+    // links to their existing customer record instead of creating a guest.
+    const customerSession = getCustomerSession(tenant.slug);
+
     const created = await createOrder({
       tenantId: tenant.id,
+      customerId: customerSession?.id,
       customerName: form.name,
       customerPhone: form.phone,
       customerAddress: form.type === "delivery" ? form.address : undefined,
