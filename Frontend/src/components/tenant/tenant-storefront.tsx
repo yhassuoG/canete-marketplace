@@ -26,10 +26,11 @@ import {
   Plus,
   Minus,
   Trash2,
+  Upload,
 } from "lucide-react";
 import type { Tenant, Product } from "@/lib/types";
 import { TenantSubscribeButton } from "@/components/tenant/tenant-subscribe-button";
-import { createOrder, createPaymentPreference, fetchProducts as fetchProductsApi, Product as ApiProduct } from "@/lib/api";
+import { createOrder, createPaymentPreference, fetchProducts as fetchProductsApi, Product as ApiProduct, uploadPaymentReceipt } from "@/lib/api";
 import { getCustomerSession } from "@/lib/customer-session";
 import { getMarketplaceAccount } from "@/lib/marketplace-account";
 
@@ -137,6 +138,10 @@ function OrderModal({
 }) {
   const [step, setStep] = useState<"form" | "yape" | "confirm" | "error">("form");
   const [submitting, setSubmitting] = useState(false);
+  const [receiptFile, setReceiptFile] = useState<File | null>(null);
+  const [receiptPreview, setReceiptPreview] = useState<string | null>(null);
+  const [receiptError, setReceiptError] = useState<string | null>(null);
+  const [uploadingReceipt, setUploadingReceipt] = useState(false);
   const [form, setForm] = useState<OrderForm>(() => {
     // Default delivery type based on tenant config
     const allowsDelivery = tenant.allowsDelivery ?? true;
@@ -175,9 +180,9 @@ function OrderModal({
   const doCreateOrder = async () => {
     setSubmitting(true);
 
-    // Para Yape/Plin usamos Mercado Pago (pasarela automática)
-    // Para efectivo, flujo directo sin pasarela
-    const usingMercadoPago = needsPaymentRef;
+    // Yape/Plin nativo: NO usamos Mercado Pago, el cliente sube comprobante
+    // Efectivo: flujo directo sin pasarela
+    const isNativeYapePlin = needsPaymentRef;
 
     // If customer is logged in (Google), pass their customerId so the order
     // links to their existing customer record instead of creating a guest.
@@ -192,8 +197,8 @@ function OrderModal({
       customerPhone: form.phone,
       customerAddress: form.type === "delivery" ? form.address : undefined,
       deliveryType: form.type,
-      paymentMethod: usingMercadoPago ? "mercadopago" : form.payment,
-      paymentReference: undefined, // MP gestiona la referencia
+      paymentMethod: form.payment, // "yape" | "plin" | "efectivo" — nativo, sin rewrite
+      paymentReference: undefined,
       notes: form.notes || undefined,
       items: lines.map(({ product: i, qty }) => ({
         productId: i.id, name: i.name, price: i.price, qty,
@@ -206,17 +211,26 @@ function OrderModal({
       return;
     }
 
-    // Si es Yape/Plin → crear preferencia en MP y redirigir
-    if (usingMercadoPago) {
-      const pref = await createPaymentPreference(created.id);
-      setSubmitting(false);
-      if (pref?.initPoint) {
-        // Redirigir al checkout de Mercado Pago
-        window.location.href = pref.initPoint;
-        return;
+    // Yape/Plin nativo → subir comprobante si hay, luego confirmar
+    if (isNativeYapePlin) {
+      if (receiptFile) {
+        setUploadingReceipt(true);
+        const proof = await uploadPaymentReceipt(
+          created.id,
+          receiptFile,
+          customerSession?.id,
+          form.name
+        );
+        setUploadingReceipt(false);
+        if (!proof) {
+          setSubmitting(false);
+          setStep("error");
+          return;
+        }
       }
-      // Si falla la preferencia, mostrar error
-      setStep("error");
+      setSubmitting(false);
+      setOrderId(created.id);
+      setStep("confirm");
       return;
     }
 
@@ -224,6 +238,33 @@ function OrderModal({
     setSubmitting(false);
     setOrderId(created.id);
     setStep("confirm");
+  };
+
+  // Handler para seleccionar comprobante de pago
+  const handleReceiptChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    setReceiptError(null);
+    if (!file) return;
+
+    // Validar tipo
+    if (!file.type.startsWith("image/")) {
+      setReceiptError("Solo se permiten imágenes (JPG, PNG, WebP)");
+      return;
+    }
+    // Validar tamaño (5 MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setReceiptError("La imagen no debe superar 5 MB");
+      return;
+    }
+
+    setReceiptFile(file);
+    setReceiptPreview(URL.createObjectURL(file));
+  };
+
+  const removeReceipt = () => {
+    setReceiptFile(null);
+    setReceiptPreview(null);
+    setReceiptError(null);
   };
 
   const submit = async (e: React.FormEvent) => {
@@ -368,7 +409,7 @@ function OrderModal({
             </div>
           </form>
         ) : step === "yape" ? (
-          /* Yape / Plin confirmation step */
+          /* Yape / Plin native — QR + comprobante */
           <form onSubmit={async (e) => { e.preventDefault(); await doCreateOrder(); }}>
             <div className="flex items-center justify-between border-b px-6 py-4">
               <div className="flex items-center gap-2">
@@ -379,19 +420,85 @@ function OrderModal({
             </div>
 
             <div className="max-h-[70vh] overflow-y-auto px-6 py-5 space-y-5">
-              {/* Info banner — Mercado Pago gestiona el pago */}
+              {/* QR + datos del negocio */}
               <div className="rounded-2xl border-2 border-dashed border-slate-200 p-5 text-center space-y-3">
-                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50">
-                  <CreditCard className="h-6 w-6 text-emerald-500"/>
+                <p className="text-sm font-bold text-ink">
+                  Escanea el QR de {paymentLabel} para pagar S/{grandTotal}
+                </p>
+
+                {/* QR image */}
+                {form.payment === "yape" && tenant.yapeQrUrl && (
+                  <img src={tenant.yapeQrUrl} alt={`QR Yape - ${tenant.name}`}
+                    className="mx-auto h-48 w-48 rounded-xl object-contain"/>
+                )}
+                {form.payment === "plin" && tenant.plinQrUrl && (
+                  <img src={tenant.plinQrUrl} alt={`QR Plin - ${tenant.name}`}
+                    className="mx-auto h-48 w-48 rounded-xl object-contain"/>
+                )}
+                {form.payment === "yape" && !tenant.yapeQrUrl && (
+                  <div className="mx-auto h-48 w-48 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 text-xs p-4 text-center">
+                    El negocio no ha configurado su QR de Yape
+                  </div>
+                )}
+                {form.payment === "plin" && !tenant.plinQrUrl && (
+                  <div className="mx-auto h-48 w-48 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 text-xs p-4 text-center">
+                    El negocio no ha configurado su QR de Plin
+                  </div>
+                )}
+
+                {/* Phone + holder */}
+                <div className="space-y-1 text-sm">
+                  {form.payment === "yape" && tenant.yapePhone && (
+                    <p className="text-slate-600">Número: <span className="font-bold text-ink">{tenant.yapePhone}</span></p>
+                  )}
+                  {form.payment === "yape" && tenant.yapeHolder && (
+                    <p className="text-slate-600">Titular: <span className="font-medium text-ink">{tenant.yapeHolder}</span></p>
+                  )}
+                  {form.payment === "plin" && tenant.plinPhone && (
+                    <p className="text-slate-600">Número: <span className="font-bold text-ink">{tenant.plinPhone}</span></p>
+                  )}
+                  {form.payment === "plin" && tenant.plinHolder && (
+                    <p className="text-slate-600">Titular: <span className="font-medium text-ink">{tenant.plinHolder}</span></p>
+                  )}
                 </div>
-                <p className="text-sm font-semibold text-ink">
-                  Pago seguro con Mercado Pago
-                </p>
+
+                {/* Instructions */}
+                {tenant.paymentInstructions && (
+                  <p className="text-xs text-slate-500 bg-slate-50 rounded-lg p-3 whitespace-pre-wrap">
+                    {tenant.paymentInstructions}
+                  </p>
+                )}
+              </div>
+
+              {/* Receipt upload */}
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-ink">
+                  Sube tu comprobante de pago
+                </label>
                 <p className="text-xs text-slate-500">
-                  Serás redirigido a Mercado Pago para completar el pago de{" "}
-                  <span className="font-bold">S/{grandTotal}</span> usando {paymentLabel}.
-                  La confirmación es automática.
+                  Toma una captura del comprobante que te da {paymentLabel} y súbela aquí. El negocio verificará tu pago.
                 </p>
+
+                {receiptPreview ? (
+                  <div className="relative rounded-xl overflow-hidden border border-slate-200">
+                    <img src={receiptPreview} alt="Comprobante" className="w-full max-h-64 object-contain"/>
+                    <button type="button" onClick={removeReceipt}
+                      className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1.5 shadow-lg">
+                      <X className="h-4 w-4"/>
+                    </button>
+                  </div>
+                ) : (
+                  <label className="flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-300 p-6 cursor-pointer hover:border-slate-400 transition">
+                    <Upload className="h-8 w-8 text-slate-400"/>
+                    <span className="text-sm text-slate-500">Toca para seleccionar imagen</span>
+                    <span className="text-xs text-slate-400">JPG, PNG o WebP — máx 5 MB</span>
+                    <input type="file" accept="image/*" onChange={handleReceiptChange} className="hidden"/>
+                  </label>
+                )}
+
+                {receiptError && (
+                  <p className="text-xs text-red-500 font-medium">{receiptError}</p>
+                )}
               </div>
 
               {/* Order recap */}
@@ -404,10 +511,10 @@ function OrderModal({
             </div>
 
             <div className="border-t px-6 pb-6 pt-4">
-              <button type="submit" disabled={submitting}
+              <button type="submit" disabled={submitting || uploadingReceipt || !receiptFile}
                 className="w-full rounded-2xl py-3.5 text-sm font-bold text-white transition active:scale-[0.98] disabled:opacity-60"
                 style={{ background: "var(--tenant-gradient)" }}>
-                {submitting ? "Redirigiendo a Mercado Pago…" : `Pagar S/${grandTotal} con ${paymentLabel} →`}
+                {submitting ? "Enviando pedido…" : !receiptFile ? "Sube tu comprobante para continuar" : `Enviar pedido con ${paymentLabel} →`}
               </button>
             </div>
           </form>
@@ -441,6 +548,19 @@ function OrderModal({
             </motion.div>
             <h2 className="text-2xl font-bold text-ink mb-1">¡Pedido recibido!</h2>
             <p className="text-sm text-slate-400 mb-5">Número de orden: <span className="font-mono font-semibold text-slate-700">{orderId.slice(0, 8).toUpperCase()}</span></p>
+
+            {/* Yape/Plin: aviso de verificación pendiente */}
+            {needsPaymentRef && (
+              <div className="rounded-2xl bg-amber-50 border border-amber-200 p-4 mb-4 text-left">
+                <p className="text-sm font-semibold text-amber-800 mb-1">
+                  ⏳ Pago en verificación
+                </p>
+                <p className="text-xs text-amber-700">
+                  El negocio revisará tu comprobante de {paymentLabel} y confirmará tu pedido pronto.
+                  Recibirás la confirmación por WhatsApp.
+                </p>
+              </div>
+            )}
 
             <div className="rounded-2xl bg-slate-50 p-4 text-left space-y-2 mb-6">
               <div className="flex justify-between text-sm"><span className="text-slate-500">Cliente</span><span className="font-medium">{form.name}</span></div>

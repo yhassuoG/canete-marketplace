@@ -21,11 +21,15 @@ import {
   Bike,
   PackageCheck,
   AlertCircle,
+  Upload,
+  Loader2,
+  Eye,
 } from "lucide-react";
 import { TenantGoogleProvider } from "@/components/providers/tenant-google-provider";
 import { useConsumer } from "@/lib/use-consumer";
 import {
   fetchTenants,
+  uploadPaymentReceipt,
   TenantApiData,
   OrderApiResponse,
 } from "@/lib/api";
@@ -569,6 +573,11 @@ export default function OrderTrackingPage({
             )}
           </motion.div>
 
+          {/* ── Estado de pago Yape/Plin nativo ─────────────────────── */}
+          {order.paymentStatus && (
+            <PaymentVerificationBlock order={order} onReuploaded={fetchOrder} />
+          )}
+
           {/* ── Footer ────────────────────────────────────────────────── */}
           <div className="flex items-center justify-between text-xs text-slate-400">
             <span>Última actualización: {lastUpdated.toLocaleTimeString("es-PE")}</span>
@@ -584,5 +593,175 @@ export default function OrderTrackingPage({
         </div>
       </div>
     </TenantGoogleProvider>
+  );
+}
+
+// ── Bloque de verificación de pago Yape/Plin ──────────────────────────────
+function PaymentVerificationBlock({
+  order,
+  onReuploaded,
+}: {
+  order: OrderApiResponse;
+  onReuploaded: () => void;
+}) {
+  const [reuploading, setReuploading] = useState(false);
+  const [reuploadError, setReuploadError] = useState<string | null>(null);
+  const [showReceipt, setShowReceipt] = useState(false);
+
+  const isPending = order.paymentStatus === "PENDING_VERIFICATION";
+  const isApproved = order.paymentStatus === "APPROVED";
+  const isRejected = order.paymentStatus === "REJECTED";
+
+  const handleReupload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validar que sea imagen
+    if (!file.type.startsWith("image/")) {
+      setReuploadError("El archivo debe ser una imagen");
+      return;
+    }
+    // Validar tamaño (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setReuploadError("La imagen no debe superar 5MB");
+      return;
+    }
+
+    setReuploading(true);
+    setReuploadError(null);
+
+    try {
+      const res = await uploadPaymentReceipt(
+        order.id,
+        file,
+        order.customerId ?? undefined,
+        order.customerName
+      );
+      if (res) {
+        onReuploaded();
+      } else {
+        setReuploadError("No se pudo subir el comprobante");
+      }
+    } catch {
+      setReuploadError("Error al subir");
+    } finally {
+      setReuploading(false);
+    }
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.2 }}
+      className="mb-6 rounded-2xl border border-slate-200 bg-white p-5"
+    >
+      <h2 className="mb-4 font-semibold text-slate-800">
+        Verificación de pago
+      </h2>
+
+      {/* Estado */}
+      <div
+        className={`flex items-center gap-3 rounded-xl p-4 ${
+          isApproved
+            ? "bg-emerald-50"
+            : isPending
+            ? "bg-amber-50"
+            : "bg-red-50"
+        }`}
+      >
+        {isApproved ? (
+          <CheckCircle2 className="h-6 w-6 text-emerald-500" />
+        ) : isPending ? (
+          <Clock className="h-6 w-6 text-amber-500" />
+        ) : (
+          <XCircle className="h-6 w-6 text-red-500" />
+        )}
+        <div className="flex-1">
+          <p
+            className={`font-medium ${
+              isApproved
+                ? "text-emerald-700"
+                : isPending
+                ? "text-amber-700"
+                : "text-red-700"
+            }`}
+          >
+            {isApproved
+              ? "Pago verificado"
+              : isPending
+              ? "Pago en verificación"
+              : "Pago rechazado"}
+          </p>
+          <p
+            className={`text-xs ${
+              isApproved
+                ? "text-emerald-600"
+                : isPending
+                ? "text-amber-600"
+                : "text-red-600"
+            }`}
+          >
+            {isApproved
+              ? `Verificado por ${order.paymentVerifiedBy ?? "el negocio"}`
+              : isPending
+              ? "El negocio está revisando tu comprobante"
+              : order.paymentRejectionReason ??
+                "El comprobante fue rechazado"}
+          </p>
+        </div>
+      </div>
+
+      {/* Ver comprobante */}
+      {order.paymentReceiptUrl && (
+        <div className="mt-3">
+          <button
+            onClick={() => setShowReceipt(!showReceipt)}
+            className="flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50"
+          >
+            <Eye className="h-4 w-4" />
+            {showReceipt ? "Ocultar comprobante" : "Ver comprobante"}
+          </button>
+          {showReceipt && (
+            <img
+              src={order.paymentReceiptUrl}
+              alt="Comprobante de pago"
+              className="mt-2 w-full max-w-xs rounded-xl border border-slate-200"
+            />
+          )}
+        </div>
+      )}
+
+      {/* Re-subir si fue rechazado */}
+      {isRejected && (
+        <div className="mt-4">
+          <p className="text-sm text-slate-600 mb-2">
+            Puedes reenviar tu comprobante:
+          </p>
+          <label className="flex items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-300 py-3 cursor-pointer hover:border-orange-400">
+            {reuploading ? (
+              <Loader2 className="h-5 w-5 animate-spin text-slate-400" />
+            ) : (
+              <>
+                <Upload className="h-5 w-5 text-slate-400" />
+                <span className="text-sm text-slate-600">
+                  Reenviar comprobante
+                </span>
+              </>
+            )}
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleReupload}
+              disabled={reuploading}
+            />
+          </label>
+          {reuploadError && (
+            <p className="mt-2 text-xs text-red-600">{reuploadError}</p>
+          )}
+        </div>
+      )}
+    </motion.div>
   );
 }

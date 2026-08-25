@@ -20,6 +20,7 @@ import {
   Newspaper,
   CalendarDays,
   Gift,
+  Smartphone,
 } from "lucide-react";
 import { clearAuthCookie } from "@/lib/auth";
 
@@ -37,6 +38,7 @@ const NAV = [
     items: [
       { href: "/admin/users", icon: Users, label: "Usuarios" },
       { href: "/admin/payments", icon: CreditCard, label: "Pagos" },
+      { href: "/admin/pagos-yape-plin", icon: Smartphone, label: "Pagos Yape/Plin" },
       { href: "/admin/plans", icon: Zap, label: "Planes SaaS" },
       { href: "/admin/recompensas", icon: Gift, label: "Recompensas" },
     ],

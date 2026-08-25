@@ -37,8 +37,18 @@ export interface TenantApiData {
   allowsDelivery: boolean | null;
   allowsPickup: boolean | null;
   deliveryFee: number | null;
+  // Yape
+  yapeEnabled: boolean | null;
   yapePhone: string | null;
+  yapeHolder: string | null;
   yapeQrUrl: string | null;
+  // Plin
+  plinEnabled: boolean | null;
+  plinPhone: string | null;
+  plinHolder: string | null;
+  plinQrUrl: string | null;
+  // Instrucciones de pago
+  paymentInstructions: string | null;
   bannerUrl: string | null;
   logoUrl: string | null;
   featured: boolean | null;
@@ -56,8 +66,18 @@ export interface UpdateTenantConfigPayload {
   allowsDelivery?: boolean;
   allowsPickup?: boolean;
   deliveryFee?: string;
+  // Yape
+  yapeEnabled?: boolean;
   yapePhone?: string;
+  yapeHolder?: string;
   yapeQrUrl?: string;
+  // Plin
+  plinEnabled?: boolean;
+  plinPhone?: string;
+  plinHolder?: string;
+  plinQrUrl?: string;
+  // Instrucciones
+  paymentInstructions?: string;
   bannerUrl?: string;
   logoUrl?: string;
 }
@@ -215,6 +235,188 @@ export async function uploadTenantLogo(
     if (!res.ok) return null;
     const data = (await res.json()) as { logoUrl?: string };
     return data.logoUrl ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Sube el QR de Yape para un tenant.
+ * Devuelve la URL pública del QR o null si falla.
+ */
+export async function uploadYapeQr(
+  slug: string,
+  file: File
+): Promise<string | null> {
+  try {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const res = await fetch(`${API_BASE}/api/tenants/${slug}/config/yape-qr`, {
+      method: "POST",
+      body: formData,
+    });
+    if (!res.ok) return null;
+    const data = (await res.json()) as { yapeQrUrl?: string };
+    return data.yapeQrUrl ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Sube el QR de Plin para un tenant.
+ * Devuelve la URL pública del QR o null si falla.
+ */
+export async function uploadPlinQr(
+  slug: string,
+  file: File
+): Promise<string | null> {
+  try {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const res = await fetch(`${API_BASE}/api/tenants/${slug}/config/plin-qr`, {
+      method: "POST",
+      body: formData,
+    });
+    if (!res.ok) return null;
+    const data = (await res.json()) as { plinQrUrl?: string };
+    return data.plinQrUrl ?? null;
+  } catch {
+    return null;
+  }
+}
+
+// ── Payment Proofs (Yape/Plin nativo) ───────────────────────────────────────
+
+export interface PaymentProofApiData {
+  id: string;
+  orderId: string;
+  tenantId: string;
+  customerId: string | null;
+  paymentMethod: string;
+  fileUrl: string;
+  fileName: string | null;
+  fileSize: number | null;
+  status: string;               // PENDING_VERIFICATION | APPROVED | REJECTED
+  rejectionReason: string | null;
+  uploadedBy: string | null;
+  verifiedBy: string | null;
+  verifiedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * Sube comprobante de pago (Yape/Plin nativo).
+ * POST /api/v1/payments/{orderId}/receipt  (multipart: file)
+ */
+export async function uploadPaymentReceipt(
+  orderId: string,
+  file: File,
+  customerId?: string,
+  customerName?: string
+): Promise<PaymentProofApiData | null> {
+  try {
+    const formData = new FormData();
+    formData.append("file", file);
+    if (customerId) formData.append("customerId", customerId);
+    if (customerName) formData.append("customerName", customerName);
+
+    const res = await fetch(`${API_BASE}/api/v1/payments/${orderId}/receipt`, {
+      method: "POST",
+      body: formData,
+    });
+    if (!res.ok) return null;
+    return (await res.json()) as PaymentProofApiData;
+  } catch {
+    return null;
+  }
+}
+
+/** Lista comprobantes de un pedido. */
+export async function fetchPaymentProofs(
+  orderId: string
+): Promise<PaymentProofApiData[]> {
+  try {
+    const res = await fetch(`${API_BASE}/api/v1/payments/${orderId}/receipt`);
+    if (!res.ok) return [];
+    return (await res.json()) as PaymentProofApiData[];
+  } catch {
+    return [];
+  }
+}
+
+/** Comprobantes pendientes de verificación para un tenant (panel del negocio). */
+export async function fetchPendingPaymentProofs(
+  tenantId: string
+): Promise<PaymentProofApiData[]> {
+  try {
+    const res = await fetch(`${API_BASE}/api/v1/payments/pending/${tenantId}`);
+    if (!res.ok) return [];
+    return (await res.json()) as PaymentProofApiData[];
+  } catch {
+    return [];
+  }
+}
+
+/** Todos los comprobantes de un tenant (historial). */
+export async function fetchAllPaymentProofs(
+  tenantId: string
+): Promise<PaymentProofApiData[]> {
+  try {
+    const res = await fetch(`${API_BASE}/api/v1/payments/proofs/${tenantId}`);
+    if (!res.ok) return [];
+    return (await res.json()) as PaymentProofApiData[];
+  } catch {
+    return [];
+  }
+}
+
+/** Todos los comprobantes pendientes (admin global). */
+export async function fetchAllPendingProofs(): Promise<PaymentProofApiData[]> {
+  try {
+    const res = await fetch(`${API_BASE}/api/v1/payments/pending`);
+    if (!res.ok) return [];
+    return (await res.json()) as PaymentProofApiData[];
+  } catch {
+    return [];
+  }
+}
+
+/** Confirma un comprobante (negocio aprueba el pago). */
+export async function confirmPaymentProof(
+  proofId: string,
+  verifiedBy?: string
+): Promise<PaymentProofApiData | null> {
+  try {
+    const params = verifiedBy ? `?verifiedBy=${verifiedBy}` : "";
+    const res = await fetch(`${API_BASE}/api/v1/payments/proofs/${proofId}/confirm${params}`, {
+      method: "POST",
+    });
+    if (!res.ok) return null;
+    return (await res.json()) as PaymentProofApiData;
+  } catch {
+    return null;
+  }
+}
+
+/** Rechaza un comprobante (negocio rechaza el pago). */
+export async function rejectPaymentProof(
+  proofId: string,
+  reason: string,
+  verifiedBy?: string
+): Promise<PaymentProofApiData | null> {
+  try {
+    const params = verifiedBy ? `?verifiedBy=${verifiedBy}` : "";
+    const res = await fetch(`${API_BASE}/api/v1/payments/proofs/${proofId}/reject${params}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ reason }),
+    });
+    if (!res.ok) return null;
+    return (await res.json()) as PaymentProofApiData;
   } catch {
     return null;
   }
@@ -378,6 +580,14 @@ export interface OrderApiResponse {
   mpInitPoint: string | null;
   mpPaymentId: number | null;
   mpPaymentStatus: string | null;
+  // Yape/Plin native payment verification
+  paymentStatus: string | null;          // PENDING_VERIFICATION | APPROVED | REJECTED
+  paymentReceiptUrl: string | null;
+  paymentVerifiedBy: string | null;
+  paymentVerifiedAt: string | null;
+  paymentRejectedAt: string | null;
+  paymentRejectedBy: string | null;
+  paymentRejectionReason: string | null;
   createdAt: string;
   updatedAt: string;
   deliveredAt: string | null;

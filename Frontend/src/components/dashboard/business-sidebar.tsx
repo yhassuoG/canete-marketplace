@@ -19,6 +19,8 @@ import {
   CreditCard,
   ChevronRight,
   LogOut,
+  Smartphone,
+  Clock,
 } from "lucide-react";
 import { clearAuthCookie } from "@/lib/auth";
 
@@ -53,6 +55,8 @@ const NAV = [
       { href: "/dashboard/productos", icon: Package, label: "Productos" },
       { href: "/dashboard/tienda", icon: Store, label: "Mi tienda" },
       { href: "/dashboard/pagos", icon: CreditCard, label: "Pagos" },
+      { href: "/dashboard/yape-plin", icon: Smartphone, label: "Yape/Plin" },
+      { href: "/dashboard/pagos-pendientes", icon: Clock, label: "Pagos pendientes" },
       { href: "/dashboard/configuracion", icon: Settings, label: "Configuración" },
     ],
   },

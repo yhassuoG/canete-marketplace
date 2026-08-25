@@ -58,8 +58,18 @@ export interface Tenant {
   allowsDelivery?: boolean | null;
   allowsPickup?: boolean | null;
   deliveryFee?: number | null;
+  // Yape
+  yapeEnabled?: boolean | null;
   yapePhone?: string | null;
+  yapeHolder?: string | null;
   yapeQrUrl?: string | null;
+  // Plin
+  plinEnabled?: boolean | null;
+  plinPhone?: string | null;
+  plinHolder?: string | null;
+  plinQrUrl?: string | null;
+  // Instrucciones de pago
+  paymentInstructions?: string | null;
   /** Logo circular del tenant (subido por el dueño). URL relativa: /uploads/tenants/{slug}/logo.png */
   logoUrl?: string | null;
   /** Destacado en la home page (superadmin toggle). */

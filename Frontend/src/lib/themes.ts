@@ -262,8 +262,15 @@ export function buildTenantFromApi(apiTenant: TenantApiData): Tenant {
     allowsDelivery: apiTenant.allowsDelivery,
     allowsPickup: apiTenant.allowsPickup,
     deliveryFee: apiTenant.deliveryFee,
+    yapeEnabled: apiTenant.yapeEnabled,
     yapePhone: apiTenant.yapePhone,
+    yapeHolder: apiTenant.yapeHolder,
     yapeQrUrl: apiTenant.yapeQrUrl,
+    plinEnabled: apiTenant.plinEnabled,
+    plinPhone: apiTenant.plinPhone,
+    plinHolder: apiTenant.plinHolder,
+    plinQrUrl: apiTenant.plinQrUrl,
+    paymentInstructions: apiTenant.paymentInstructions,
     logoUrl: apiTenant.logoUrl,
   };
 }
