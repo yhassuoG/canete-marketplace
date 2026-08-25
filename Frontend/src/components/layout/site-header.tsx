@@ -45,9 +45,7 @@ export function SiteHeader() {
           >
             <Search className="h-5 w-5" />
           </Link>
-          <div className="hidden sm:block">
-            <ConsumerNavButton variant="ghost" />
-          </div>
+          <ConsumerNavButton variant="ghost" />
           <Link
             href="/login"
             className="hidden rounded-xl bg-brand-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700 md:inline-flex"
@@ -77,6 +75,9 @@ export function SiteHeader() {
               {link.label}
             </Link>
           ))}
+          <div className="mt-1 border-t border-brand-100 pt-2">
+            <ConsumerNavButton variant="solid" />
+          </div>
           <Link
             href="/login"
             onClick={() => setOpen(false)}
