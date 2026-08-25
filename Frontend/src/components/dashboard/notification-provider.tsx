@@ -44,15 +44,13 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [toasts, setToasts] = useState<NotificationItem[]>([]);
   const tenantIdRef = useRef<string | null>(null);
-  const lastSeenRef = useRef<number>(
-    typeof window !== "undefined"
-      ? parseInt(localStorage.getItem(STORAGE_KEY) ?? "0", 10)
-      : 0
-  );
+  const lastSeenRef = useRef<number>(0);
   const isFirstPollRef = useRef(true);
 
-  // Resolve tenant
+  // Resolve tenant + load last-seen from localStorage (client-only)
   useEffect(() => {
+    lastSeenRef.current = parseInt(localStorage.getItem(STORAGE_KEY) ?? "0", 10);
+
     const user = getAuthUser();
     if (!user?.tenantSlug) return;
     fetchTenant(user.tenantSlug).then((t) => {
