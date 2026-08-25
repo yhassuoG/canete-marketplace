@@ -36,6 +36,8 @@ export interface TenantApiData {
   // Configuración delivery / pickup
   allowsDelivery: boolean | null;
   allowsPickup: boolean | null;
+  cashEnabled: boolean | null;
+  cardEnabled: boolean | null;
   deliveryFee: number | null;
   // Yape
   yapeEnabled: boolean | null;
@@ -65,6 +67,8 @@ export interface UpdateTenantConfigPayload {
   primaryColor?: string;
   allowsDelivery?: boolean;
   allowsPickup?: boolean;
+  cashEnabled?: boolean;
+  cardEnabled?: boolean;
   deliveryFee?: string;
   // Yape
   yapeEnabled?: boolean;

@@ -149,9 +149,17 @@ function OrderModal({
     const defaultType: "pickup" | "delivery" = !allowsPickup && allowsDelivery
       ? "delivery"
       : "pickup";
+    // Default payment method: first enabled method
+    const enabledPayments = [
+      ...(tenant.yapeEnabled ? ["yape"] : []),
+      ...(tenant.plinEnabled ? ["plin"] : []),
+      ...(tenant.cashEnabled ?? true ? ["efectivo"] : []),
+      ...(tenant.cardEnabled ? ["card"] : []),
+    ];
+    const defaultPayment = enabledPayments[0] ?? "efectivo";
     return {
       name: "", phone: "", type: defaultType, address: "",
-      payment: "efectivo", notes: "", paymentReference: "",
+      payment: defaultPayment, notes: "", paymentReference: "",
     };
   });
   const [orderId, setOrderId] = useState<string>("");
@@ -281,9 +289,10 @@ function OrderModal({
   };
 
   const PAYMENTS = [
-    { id: "yape",     label: "Yape",      icon: CreditCard },
-    { id: "plin",     label: "Plin",      icon: CreditCard },
-    { id: "efectivo", label: "Efectivo",  icon: Banknote   },
+    ...(tenant.yapeEnabled ? [{ id: "yape",     label: "Yape",      icon: CreditCard }] : []),
+    ...(tenant.plinEnabled ? [{ id: "plin",     label: "Plin",      icon: CreditCard }] : []),
+    ...(tenant.cashEnabled ?? true ? [{ id: "efectivo", label: "Efectivo",  icon: Banknote   }] : []),
+    ...(tenant.cardEnabled ? [{ id: "card",     label: "Tarjeta",   icon: CreditCard }] : []),
   ];
 
   return (
@@ -374,7 +383,7 @@ function OrderModal({
               {/* Payment */}
               <div className="space-y-3">
                 <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Método de pago</p>
-                <div className="grid grid-cols-3 gap-2">
+                <div className={`grid gap-2 ${PAYMENTS.length === 1 ? "grid-cols-1" : PAYMENTS.length === 2 ? "grid-cols-2" : "grid-cols-3"}`}>
                   {PAYMENTS.map(({ id, label, icon: Icon }) => (
                     <button key={id} type="button" onClick={() => set("payment", id)}
                       className={`flex flex-col items-center gap-1.5 rounded-2xl border py-3 text-xs font-medium transition-all ${

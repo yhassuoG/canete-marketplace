@@ -8,7 +8,7 @@ import { getApiBase } from "@/lib/api-base";
 
 const MapPicker = dynamic(() => import("@/components/dashboard/map-picker"), { ssr: false });
 import { motion } from "framer-motion";
-import { Settings, Bell, Shield, Save, Palette, Store, Loader2, ImagePlus, Upload, X } from "lucide-react";
+import { Settings, Bell, Shield, Save, Palette, Store, Loader2, ImagePlus, Upload, X, CreditCard, Banknote, Smartphone, Wallet } from "lucide-react";
 
 const API_BASE = getApiBase();
 
@@ -20,6 +20,7 @@ export default function ConfiguracionPage() {
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [notif, setNotif]   = useState({ newReservation: true, newOrder: true, newReview: true, dailySummary: true, weeklySummary: false, lowStock: true });
+  const [payMethods, setPayMethods] = useState({ yape: false, plin: false, cash: true, card: false });
   const [theme, setTheme]   = useState({ primary: "#0c4a6e", accent: "#f97316", radius: "rounded" });
   const [info, setInfo]     = useState({
     name: "", tagline: "", address: "", phone: "", description: "",
@@ -59,6 +60,13 @@ export default function ConfiguracionPage() {
           const url = apiData.logoUrl;
           setLogoUrl(url.startsWith("http") ? url : `${API_BASE}${url}`);
         }
+        // Cargar métodos de pago configurados
+        setPayMethods({
+          yape: apiData.yapeEnabled ?? false,
+          plin: apiData.plinEnabled ?? false,
+          cash: apiData.cashEnabled ?? true,
+          card: apiData.cardEnabled ?? false,
+        });
         // Update localStorage cache so storefront can read it even if API is down
         localStorage.setItem(`coords_${slug}`, JSON.stringify({
           lat:  apiData.lat  ?? -13.0750,
@@ -160,6 +168,10 @@ export default function ConfiguracionPage() {
           address:     cur.address,
           lat:         cur.lat,
           lng:         cur.lng,
+          yapeEnabled: payMethods.yape,
+          plinEnabled: payMethods.plin,
+          cashEnabled: payMethods.cash,
+          cardEnabled: payMethods.card,
         })
       : null;
 
@@ -200,6 +212,84 @@ export default function ConfiguracionPage() {
       </header>
 
       <div className="p-6 grid gap-6 lg:grid-cols-2">
+        {/* Payment methods */}
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+          className="rounded-3xl border border-slate-100 bg-white p-6 shadow-soft lg:col-span-2">
+          <div className="flex items-center gap-2 mb-2"><Wallet className="h-4 w-4 text-[#0c4a6e]"/><h3 className="font-semibold text-ink">Métodos de pago</h3></div>
+          <p className="text-sm text-slate-400 mb-5">Activa o desactiva los métodos de pago que aceptas en tu tienda. Los cambios se reflejan inmediatamente en tu tienda pública.</p>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {/* Efectivo */}
+            <div className={`flex items-center justify-between rounded-2xl border p-4 transition-colors ${payMethods.cash ? "border-emerald-200 bg-emerald-50/40" : "border-slate-200 bg-white"}`}>
+              <div className="flex items-center gap-3">
+                <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${payMethods.cash ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-400"}`}>
+                  <Banknote className="h-5 w-5"/>
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-ink">Efectivo</p>
+                  <p className="text-xs text-slate-400">Pago en entrega</p>
+                </div>
+              </div>
+              <button onClick={() => setPayMethods(p => ({ ...p, cash: !p.cash }))} className={`relative h-6 w-11 rounded-full transition-colors ${payMethods.cash ? "bg-emerald-500" : "bg-slate-200"}`}>
+                <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${payMethods.cash ? "translate-x-5" : "translate-x-0.5"}`}/>
+              </button>
+            </div>
+
+            {/* Yape */}
+            <div className={`flex items-center justify-between rounded-2xl border p-4 transition-colors ${payMethods.yape ? "border-purple-200 bg-purple-50/40" : "border-slate-200 bg-white"}`}>
+              <div className="flex items-center gap-3">
+                <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${payMethods.yape ? "bg-purple-100 text-purple-700" : "bg-slate-100 text-slate-400"}`}>
+                  <Smartphone className="h-5 w-5"/>
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-ink">Yape</p>
+                  <p className="text-xs text-slate-400">Transferencia con QR</p>
+                </div>
+              </div>
+              <button onClick={() => setPayMethods(p => ({ ...p, yape: !p.yape }))} className={`relative h-6 w-11 rounded-full transition-colors ${payMethods.yape ? "bg-purple-500" : "bg-slate-200"}`}>
+                <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${payMethods.yape ? "translate-x-5" : "translate-x-0.5"}`}/>
+              </button>
+            </div>
+
+            {/* Plin */}
+            <div className={`flex items-center justify-between rounded-2xl border p-4 transition-colors ${payMethods.plin ? "border-blue-200 bg-blue-50/40" : "border-slate-200 bg-white"}`}>
+              <div className="flex items-center gap-3">
+                <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${payMethods.plin ? "bg-blue-100 text-blue-700" : "bg-slate-100 text-slate-400"}`}>
+                  <Smartphone className="h-5 w-5"/>
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-ink">Plin</p>
+                  <p className="text-xs text-slate-400">Transferencia interbancaria</p>
+                </div>
+              </div>
+              <button onClick={() => setPayMethods(p => ({ ...p, plin: !p.plin }))} className={`relative h-6 w-11 rounded-full transition-colors ${payMethods.plin ? "bg-blue-500" : "bg-slate-200"}`}>
+                <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${payMethods.plin ? "translate-x-5" : "translate-x-0.5"}`}/>
+              </button>
+            </div>
+
+            {/* Tarjeta */}
+            <div className={`flex items-center justify-between rounded-2xl border p-4 transition-colors ${payMethods.card ? "border-[#0c4a6e]/20 bg-[#0c4a6e]/5" : "border-slate-200 bg-white"}`}>
+              <div className="flex items-center gap-3">
+                <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${payMethods.card ? "bg-[#0c4a6e]/10 text-[#0c4a6e]" : "bg-slate-100 text-slate-400"}`}>
+                  <CreditCard className="h-5 w-5"/>
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-ink">Tarjeta</p>
+                  <p className="text-xs text-slate-400">Vía Mercado Pago</p>
+                </div>
+              </div>
+              <button onClick={() => setPayMethods(p => ({ ...p, card: !p.card }))} className={`relative h-6 w-11 rounded-full transition-colors ${payMethods.card ? "bg-[#0c4a6e]" : "bg-slate-200"}`}>
+                <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${payMethods.card ? "translate-x-5" : "translate-x-0.5"}`}/>
+              </button>
+            </div>
+          </div>
+          {(!payMethods.cash && !payMethods.yape && !payMethods.plin && !payMethods.card) && (
+            <p className="mt-3 text-xs text-amber-600 flex items-center gap-1.5">
+              <Shield className="h-3.5 w-3.5"/>
+              Debes tener al menos un método de pago activo para recibir pedidos.
+            </p>
+          )}
+        </motion.div>
+
         {/* Notifications */}
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
           className="rounded-3xl border border-slate-100 bg-white p-6 shadow-soft">

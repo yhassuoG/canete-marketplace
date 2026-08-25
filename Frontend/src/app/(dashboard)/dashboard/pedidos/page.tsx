@@ -356,7 +356,9 @@ export default function DashboardPedidosPage() {
                       setExpandedId(null);
                     } else {
                       setExpandedId(order.id);
-                      if (order.paymentStatus === "PENDING_VERIFICATION" && !proofsByOrder[order.id]) {
+                      // Always load proofs if the order has a digital payment method
+                      const isDigital = order.paymentMethod === "yape" || order.paymentMethod === "plin" || order.paymentMethod === "card";
+                      if (isDigital && !proofsByOrder[order.id]) {
                         loadProofsForOrder(order.id);
                       }
                     }
@@ -562,19 +564,61 @@ export default function DashboardPedidosPage() {
                             )}
 
                             {order.paymentStatus === "APPROVED" && (
-                              <p className="text-sm text-emerald-600 flex items-center gap-2">
-                                <CheckCircle2 className="h-4 w-4" />
-                                Pago verificado{order.paymentVerifiedBy && ` por ${order.paymentVerifiedBy}`}
-                              </p>
+                              <div className="space-y-2">
+                                <p className="text-sm text-emerald-600 flex items-center gap-2">
+                                  <CheckCircle2 className="h-4 w-4" />
+                                  Pago verificado{order.paymentVerifiedBy && ` por ${order.paymentVerifiedBy}`}
+                                </p>
+                                {proofsByOrder[order.id]?.length > 0 && (
+                                  <div className="flex gap-2">
+                                    {proofsByOrder[order.id].map((proof) => (
+                                      <div key={proof.id} className="relative group">
+                                        <img
+                                          src={proof.fileUrl}
+                                          alt="Comprobante"
+                                          className="h-20 w-20 rounded-lg border border-slate-200 object-cover cursor-pointer hover:opacity-80 transition-opacity"
+                                          onClick={() => setViewProof(proof)}
+                                        />
+                                        <button
+                                          onClick={() => setViewProof(proof)}
+                                          className="absolute inset-0 flex items-center justify-center rounded-lg bg-black/0 group-hover:bg-black/20 transition-colors"
+                                        >
+                                          <Eye className="h-5 w-5 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                                        </button>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
                             )}
 
                             {order.paymentStatus === "REJECTED" && (
-                              <div className="space-y-1">
+                              <div className="space-y-2">
                                 <p className="text-sm text-red-600 flex items-center gap-2">
                                   <XCircle className="h-4 w-4" /> Pago rechazado
                                 </p>
                                 {order.paymentRejectionReason && (
                                   <p className="text-xs text-red-500 pl-6">Motivo: {order.paymentRejectionReason}</p>
+                                )}
+                                {proofsByOrder[order.id]?.length > 0 && (
+                                  <div className="flex gap-2">
+                                    {proofsByOrder[order.id].map((proof) => (
+                                      <div key={proof.id} className="relative group">
+                                        <img
+                                          src={proof.fileUrl}
+                                          alt="Comprobante"
+                                          className="h-20 w-20 rounded-lg border border-slate-200 object-cover cursor-pointer hover:opacity-80 transition-opacity"
+                                          onClick={() => setViewProof(proof)}
+                                        />
+                                        <button
+                                          onClick={() => setViewProof(proof)}
+                                          className="absolute inset-0 flex items-center justify-center rounded-lg bg-black/0 group-hover:bg-black/20 transition-colors"
+                                        >
+                                          <Eye className="h-5 w-5 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                                        </button>
+                                      </div>
+                                    ))}
+                                  </div>
                                 )}
                               </div>
                             )}

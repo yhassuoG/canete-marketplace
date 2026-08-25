@@ -58,6 +58,9 @@ export interface Tenant {
   allowsDelivery?: boolean | null;
   allowsPickup?: boolean | null;
   deliveryFee?: number | null;
+  // Payment methods
+  cashEnabled?: boolean | null;
+  cardEnabled?: boolean | null;
   // Yape
   yapeEnabled?: boolean | null;
   yapePhone?: string | null;
