@@ -22,6 +22,7 @@ import {
   Smartphone,
 } from "lucide-react";
 import { clearAuthCookie } from "@/lib/auth";
+import { useNotifications } from "@/components/dashboard/notification-provider";
 
 const NAV = [
   {
@@ -77,6 +78,7 @@ export function BusinessSidebar({
 }: BusinessSidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const { unreadCount } = useNotifications();
 
   function handleLogout() {
     clearAuthCookie();
@@ -132,7 +134,12 @@ export function BusinessSidebar({
                       )}
                       <Icon className="h-4 w-4 flex-shrink-0" />
                       {label}
-                      {active && <ChevronRight className="ml-auto h-3.5 w-3.5 opacity-40" />}
+                      {href === "/dashboard/pedidos" && unreadCount > 0 && (
+                        <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-coral px-1.5 text-[10px] font-bold text-white">
+                          {unreadCount > 9 ? "9+" : unreadCount}
+                        </span>
+                      )}
+                      {active && unreadCount === 0 && <ChevronRight className="ml-auto h-3.5 w-3.5 opacity-40" />}
                     </Link>
                   </li>
                 );

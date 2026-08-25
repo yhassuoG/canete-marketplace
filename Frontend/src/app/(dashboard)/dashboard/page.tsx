@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
+import { useEffect, useState, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   AreaChart,
   Area,
@@ -22,9 +22,12 @@ import {
   Sparkles,
   Clock,
   CheckCircle2,
+  Package,
+  X,
 } from "lucide-react";
 import { MetricCard } from "@/components/ui/metric-card";
 import { ClientOnly } from "@/components/ui/client-only";
+import { useNotifications } from "@/components/dashboard/notification-provider";
 import {
   fetchBusinessAnalytics,
   fetchRevenueSeries,
@@ -47,6 +50,21 @@ export default function BusinessDashboard() {
   const [orders, setOrders] = useState<OrderApiResponse[]>([]);
   const [tenant, setTenant] = useState<TenantApiData | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
+  const [bellOpen, setBellOpen] = useState(false);
+  const bellRef = useRef<HTMLDivElement>(null);
+  const { notifications, unreadCount, markAllRead, markRead, clearAll } = useNotifications();
+
+  // Close bell dropdown on outside click
+  useEffect(() => {
+    if (!bellOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (bellRef.current && !bellRef.current.contains(e.target as Node)) {
+        setBellOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [bellOpen]);
 
   useEffect(() => {
     const user = getAuthUser();
@@ -100,10 +118,84 @@ export default function BusinessDashboard() {
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
             Abierto ahora
           </div>
-          <button className="relative rounded-xl border border-slate-200 bg-white p-2.5 text-slate-500">
-            <Bell className="h-4 w-4" />
-            <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-coral" />
-          </button>
+          <div ref={bellRef} className="relative">
+            <button
+              onClick={() => {
+                setBellOpen((v) => !v);
+                if (!bellOpen) markAllRead();
+              }}
+              className="relative rounded-xl border border-slate-200 bg-white p-2.5 text-slate-500 hover:text-ink transition-colors"
+            >
+              <Bell className="h-4 w-4" />
+              {unreadCount > 0 && (
+                <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-coral px-1 text-[10px] font-bold text-white">
+                  {unreadCount > 9 ? "9+" : unreadCount}
+                </span>
+              )}
+            </button>
+
+            {/* Notification dropdown */}
+            <AnimatePresence>
+              {bellOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: -8, scale: 0.97 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -8, scale: 0.97 }}
+                  transition={{ duration: 0.15 }}
+                  className="absolute right-0 top-full mt-2 w-80 rounded-2xl border border-slate-100 bg-white shadow-xl overflow-hidden z-50"
+                >
+                  <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
+                    <h3 className="text-sm font-semibold text-ink">Notificaciones</h3>
+                    {notifications.length > 0 && (
+                      <button
+                        onClick={clearAll}
+                        className="text-xs text-slate-400 hover:text-slate-600 transition-colors"
+                      >
+                        Limpiar
+                      </button>
+                    )}
+                  </div>
+
+                  {notifications.length === 0 ? (
+                    <div className="py-10 text-center">
+                      <Bell className="h-8 w-8 text-slate-200 mx-auto mb-2" />
+                      <p className="text-sm text-slate-400">Sin notificaciones</p>
+                    </div>
+                  ) : (
+                    <div className="max-h-80 overflow-y-auto divide-y divide-slate-50">
+                      {notifications.slice(0, 20).map((n) => (
+                        <div
+                          key={n.id}
+                          className={`flex items-start gap-3 px-4 py-3 hover:bg-slate-50 transition-colors cursor-pointer ${
+                            !n.read ? "bg-amber-50/40" : ""
+                          }`}
+                          onClick={() => markRead(n.id)}
+                        >
+                          <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-[#083d77]">
+                            <Package className="h-4 w-4 text-white" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm text-ink truncate">{n.message}</p>
+                            <p className="text-xs text-slate-400 mt-0.5">
+                              {new Date(n.timestamp).toLocaleString("es-PE", {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                                day: "2-digit",
+                                month: "short",
+                              })}
+                            </p>
+                          </div>
+                          {!n.read && (
+                            <span className="h-2 w-2 rounded-full bg-coral flex-shrink-0 mt-2" />
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
       </header>
 
