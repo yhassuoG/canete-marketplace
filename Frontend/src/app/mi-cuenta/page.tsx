@@ -22,7 +22,6 @@ import {
 } from "lucide-react";
 import { TenantGoogleProvider } from "@/components/providers/tenant-google-provider";
 import { useConsumer } from "@/lib/use-consumer";
-import { categories, featuredBusinesses } from "@/lib/data";
 import { fetchOrdersByAccount, fetchTenants, OrderApiResponse, TenantApiData } from "@/lib/api";
 
 // ── Status helpers ────────────────────────────────────────────────────────────
@@ -43,20 +42,19 @@ function statusColor(status: string): string {
   return STATUS_FLOW[status]?.color ?? "bg-slate-100 text-slate-700 border-slate-200";
 }
 
-type Section = "overview" | "orders" | "favorites" | "rewards" | "addresses" | "settings";
+type Section = "overview" | "orders" | "favorites" | "addresses" | "settings";
 
 const NAV_ITEMS: { id: Section; label: string; icon: typeof Package }[] = [
   { id: "overview", label: "Resumen", icon: Sparkles },
   { id: "orders", label: "Mis pedidos", icon: Package },
   { id: "favorites", label: "Tiendas favoritas", icon: Heart },
-  { id: "rewards", label: "Puntos y recompensas", icon: Gift },
   { id: "addresses", label: "Direcciones", icon: MapPin },
   { id: "settings", label: "Configuración", icon: Settings },
 ];
 
 export default function MiCuentaPage() {
   const router = useRouter();
-  const { account, hydrated, logout } = useConsumer();
+  const { account, hydrated, logout, subscribe, unsubscribe } = useConsumer();
   const [section, setSection] = useState<Section>("overview");
   const [search, setSearch] = useState("");
   const [orders, setOrders] = useState<OrderApiResponse[]>([]);
@@ -99,16 +97,17 @@ export default function MiCuentaPage() {
     );
   }
 
-  const favoriteTenants = featuredBusinesses.filter((b) =>
-    account.subscribedTenants.includes(b.tenantSlug)
+  // Tenants reales del API
+  const allTenantsList = Object.values(tenantMap).filter((t) => t.status === "active");
+  const favoriteTenants = allTenantsList.filter((t) =>
+    account.subscribedTenants.includes(t.slug)
   );
-  const allTenants = featuredBusinesses;
   const filteredTenants = search
-    ? allTenants.filter((b) =>
+    ? allTenantsList.filter((b) =>
         b.name.toLowerCase().includes(search.toLowerCase()) ||
         b.category.toLowerCase().includes(search.toLowerCase())
       )
-    : allTenants;
+    : allTenantsList;
 
   const totalSpent = orders.reduce((sum, o) => sum + o.total, 0);
   const loyaltyPoints = Math.floor(totalSpent * 10);
@@ -328,12 +327,20 @@ export default function MiCuentaPage() {
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
                     {filteredTenants.slice(0, 6).map((biz) => (
                       <Link
-                        key={biz.tenantSlug}
-                        href={`/${biz.tenantSlug}`}
+                        key={biz.id}
+                        href={`/${biz.slug}`}
                         className="group overflow-hidden rounded-2xl border border-slate-200 bg-white transition hover:border-orange-200 hover:shadow-lg"
                       >
-                        <div className={`flex h-24 items-center justify-center bg-gradient-to-br ${biz.accent}`}>
-                          <span className="text-3xl">{categories.find(c => c.title === biz.category)?.emoji ?? "🏪"}</span>
+                        <div
+                          className="flex h-24 items-center justify-center"
+                          style={{ background: biz.gradient || "linear-gradient(135deg, #fb923c, #f43f5e)" }}
+                        >
+                          {biz.logoUrl ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={biz.logoUrl} alt={biz.name} className="h-full w-full object-cover" />
+                          ) : (
+                            <span className="text-3xl">🏪</span>
+                          )}
                         </div>
                         <div className="p-4">
                           <div className="flex items-start justify-between">
@@ -343,7 +350,7 @@ export default function MiCuentaPage() {
                             </div>
                             <div className="flex items-center gap-1 text-xs text-amber-500">
                               <Star className="h-3 w-3 fill-current" />
-                              {biz.score}
+                              {biz.rating.toFixed(1)}
                             </div>
                           </div>
                           <p className="mt-2 truncate text-xs text-slate-400">{biz.tagline}</p>
@@ -432,117 +439,117 @@ export default function MiCuentaPage() {
                 className="space-y-4"
               >
                 <h1 className="text-xl font-bold text-slate-800">Tiendas favoritas</h1>
-                {favoriteTenants.length === 0 ? (
-                  <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-12 text-center">
-                    <Heart className="mx-auto h-10 w-10 text-slate-300" />
-                    <p className="mt-3 font-medium text-slate-600">Aún no tienes tiendas favoritas</p>
-                    <p className="mt-1 text-sm text-slate-400">Suscríbete a tiendas desde sus páginas</p>
+
+                {/* Favoritos actuales */}
+                {favoriteTenants.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium text-slate-500">Tus tiendas favoritas ({favoriteTenants.length})</p>
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                      {favoriteTenants.map((tenant) => (
+                        <div
+                          key={tenant.id}
+                          className="group flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-4 transition hover:border-orange-200 hover:shadow-md"
+                        >
+                          <Link href={`/${tenant.slug}`} className="flex flex-1 items-center gap-4 min-w-0">
+                            <div
+                              className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl text-2xl overflow-hidden"
+                              style={{ background: tenant.gradient || "linear-gradient(135deg, #fb923c, #f43f5e)" }}
+                            >
+                              {tenant.logoUrl ? (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img src={tenant.logoUrl} alt={tenant.name} className="h-full w-full object-cover" />
+                              ) : (
+                                <span>🏪</span>
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="truncate font-semibold text-slate-800">{tenant.name}</p>
+                              <p className="truncate text-xs text-slate-400">{tenant.tagline}</p>
+                              <div className="mt-1 flex items-center gap-2 text-xs text-slate-400">
+                                <Star className="h-3 w-3 fill-amber-400 text-amber-400" /> {tenant.rating.toFixed(1)} · {tenant.location}
+                              </div>
+                            </div>
+                          </Link>
+                          <button
+                            type="button"
+                            onClick={() => unsubscribe(tenant.slug)}
+                            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-rose-500 transition hover:bg-rose-50"
+                            title="Quitar de favoritos"
+                          >
+                            <Heart className="h-5 w-5 fill-rose-500" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Explorar tiendas para agregar como favoritas */}
+                <div className="space-y-3">
+                  <p className="text-sm font-medium text-slate-500">
+                    {favoriteTenants.length === 0 ? "Explora tiendas y márcalas como favoritas" : "Explorar más tiendas"}
+                  </p>
+
+                  {allTenantsList.length === 0 ? (
+                    <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center">
+                      <Store className="mx-auto h-8 w-8 text-slate-300" />
+                      <p className="mt-2 text-sm text-slate-400">Cargando tiendas...</p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                      {allTenantsList
+                        .filter((t) => !account.subscribedTenants.includes(t.slug))
+                        .map((tenant) => (
+                          <div
+                            key={tenant.id}
+                            className="group flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-4 transition hover:border-orange-200 hover:shadow-md"
+                          >
+                            <Link href={`/${tenant.slug}`} className="flex flex-1 items-center gap-4 min-w-0">
+                              <div
+                                className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl text-2xl overflow-hidden"
+                                style={{ background: tenant.gradient || "linear-gradient(135deg, #fb923c, #f43f5e)" }}
+                              >
+                                {tenant.logoUrl ? (
+                                  // eslint-disable-next-line @next/next/no-img-element
+                                  <img src={tenant.logoUrl} alt={tenant.name} className="h-full w-full object-cover" />
+                                ) : (
+                                  <span>🏪</span>
+                                )}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="truncate font-semibold text-slate-800">{tenant.name}</p>
+                                <p className="truncate text-xs text-slate-400">{tenant.tagline}</p>
+                                <div className="mt-1 flex items-center gap-2 text-xs text-slate-400">
+                                  <Star className="h-3 w-3 fill-amber-400 text-amber-400" /> {tenant.rating.toFixed(1)} · {tenant.location}
+                                </div>
+                              </div>
+                            </Link>
+                            <button
+                              type="button"
+                              onClick={() => subscribe(tenant.slug)}
+                              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-slate-400 transition hover:bg-rose-50 hover:text-rose-500"
+                              title="Agregar a favoritos"
+                            >
+                              <Heart className="h-5 w-5" />
+                            </button>
+                          </div>
+                        ))}
+                    </div>
+                  )}
+
+                  {favoriteTenants.length === 0 && allTenantsList.length > 0 && (
                     <Link
                       href="/marketplace"
-                      className="mt-4 inline-flex items-center gap-2 rounded-xl bg-gradient-to-br from-coral to-orange-500 px-4 py-2 text-sm font-medium text-white"
+                      className="mt-2 inline-flex items-center gap-2 rounded-xl bg-gradient-to-br from-coral to-orange-500 px-4 py-2 text-sm font-medium text-white"
                     >
                       <ShoppingBag className="h-4 w-4" /> Explorar marketplace
                     </Link>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    {favoriteTenants.map((biz) => (
-                      <Link
-                        key={biz.tenantSlug}
-                        href={`/${biz.tenantSlug}`}
-                        className="group flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-4 transition hover:border-orange-200 hover:shadow-md"
-                      >
-                        <div className={`flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br ${biz.accent} text-2xl`}>
-                          {categories.find(c => c.title === biz.category)?.emoji ?? "🏪"}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="truncate font-semibold text-slate-800">{biz.name}</p>
-                          <p className="truncate text-xs text-slate-400">{biz.tagline}</p>
-                          <div className="mt-1 flex items-center gap-2 text-xs text-slate-400">
-                            <Star className="h-3 w-3 fill-amber-400 text-amber-400" /> {biz.score} · {biz.location}
-                          </div>
-                        </div>
-                        <ChevronRight className="h-5 w-5 text-slate-300 group-hover:text-orange-500 transition" />
-                      </Link>
-                    ))}
-                  </div>
-                )}
-              </motion.div>
-            )}
-
-            {/* ── REWARDS ────────────────────────────────────────────── */}
-            {section === "rewards" && (
-              <motion.div
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="space-y-6"
-              >
-                <h1 className="text-xl font-bold text-slate-800">Puntos y recompensas</h1>
-
-                {/* Points card */}
-                <div className="overflow-hidden rounded-2xl bg-gradient-to-br from-orange-500 to-rose-500 p-6 text-white">
-                  <p className="text-sm text-white/70">Tus puntos disponibles</p>
-                  <p className="mt-1 text-4xl font-bold">{loyaltyPoints}</p>
-                  <p className="mt-2 text-sm text-white/60">Equivalente a S/.{(loyaltyPoints / 10).toFixed(2)} en compras</p>
-                </div>
-
-                {/* Tier progress */}
-                <div className="rounded-2xl border border-slate-200 bg-white p-5">
-                  <div className="flex items-center justify-between">
-                    <h2 className="font-semibold text-slate-800">Nivel de membresía</h2>
-                    <span className="rounded-full bg-orange-100 px-3 py-1 text-xs font-medium text-orange-700">Oro</span>
-                  </div>
-                  <div className="mt-4">
-                    <div className="mb-1 flex items-center justify-between text-xs text-slate-400">
-                      <span>Oro</span>
-                      <span>Platino</span>
-                    </div>
-                    <div className="h-2 overflow-hidden rounded-full bg-slate-100">
-                      <div className="h-full rounded-full bg-gradient-to-r from-orange-400 to-rose-500" style={{ width: "65%" }} />
-                    </div>
-                    <p className="mt-2 text-xs text-slate-400">Te faltan {Math.max(0, 3000 - loyaltyPoints)} puntos para Platino</p>
-                  </div>
-                </div>
-
-                {/* Available rewards */}
-                <div>
-                  <h2 className="mb-3 font-semibold text-slate-800">Recompensas disponibles</h2>
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    {[
-                      { title: "Descuento S/.20", cost: 200, emoji: "💸" },
-                      { title: "Delivery gratis", cost: 150, emoji: "🛵" },
-                      { title: "Ceviche gratis", cost: 500, emoji: "🐟" },
-                      { title: "Tour de vinos", cost: 1200, emoji: "🍷" },
-                    ].map((reward) => {
-                      const canRedeem = loyaltyPoints >= reward.cost;
-                      return (
-                        <div key={reward.title} className={`rounded-2xl border bg-white p-4 transition ${canRedeem ? "border-slate-200 hover:border-orange-200 hover:shadow-md" : "border-slate-100 opacity-60"}`}>
-                          <div className="flex items-center gap-3">
-                            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-100 text-2xl">
-                              {reward.emoji}
-                            </div>
-                            <div className="flex-1">
-                              <p className="font-medium text-slate-800">{reward.title}</p>
-                              <p className="text-xs text-slate-400">{reward.cost} puntos</p>
-                            </div>
-                            <button
-                              disabled={!canRedeem}
-                              className={`rounded-xl px-3 py-2 text-xs font-medium transition ${
-                                canRedeem
-                                  ? "bg-gradient-to-br from-coral to-orange-500 text-white hover:shadow-md"
-                                  : "bg-slate-100 text-slate-400"
-                              }`}
-                            >
-                              {canRedeem ? "Canjear" : "Insuficiente"}
-                            </button>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
+                  )}
                 </div>
               </motion.div>
             )}
+
+
 
             {/* ── ADDRESSES ──────────────────────────────────────────── */}
             {section === "addresses" && (

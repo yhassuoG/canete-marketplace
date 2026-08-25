@@ -7,6 +7,7 @@ import {
   setMarketplaceAccount,
   clearMarketplaceAccount,
   addSubscription,
+  removeSubscription,
 } from "@/lib/marketplace-account";
 
 /**
@@ -48,5 +49,10 @@ export function useConsumer() {
     setAccount(getMarketplaceAccount());
   }, []);
 
-  return { account, hydrated, login, logout, subscribe };
+  const unsubscribe = useCallback((tenantSlug: string) => {
+    removeSubscription(tenantSlug);
+    setAccount(getMarketplaceAccount());
+  }, []);
+
+  return { account, hydrated, login, logout, subscribe, unsubscribe };
 }

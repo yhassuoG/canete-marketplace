@@ -41,3 +41,10 @@ export function addSubscription(tenantSlug: string): void {
     setMarketplaceAccount(acc);
   }
 }
+
+export function removeSubscription(tenantSlug: string): void {
+  const acc = getMarketplaceAccount();
+  if (!acc) return;
+  acc.subscribedTenants = acc.subscribedTenants.filter((s) => s !== tenantSlug);
+  setMarketplaceAccount(acc);
+}

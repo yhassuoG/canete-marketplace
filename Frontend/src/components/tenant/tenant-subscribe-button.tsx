@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import {
   getMarketplaceAccount,
   addSubscription,
+  removeSubscription,
 } from "@/lib/marketplace-account";
 import { getApiBase } from "@/lib/api-base";
 
@@ -52,6 +53,12 @@ export function TenantSubscribeButton({ tenantSlug, primaryColor = "#2563eb" }: 
     }
   };
 
+  const handleUnsubscribe = async () => {
+    removeSubscription(tenantSlug);
+    setStatus("idle");
+    setJustSubscribed(false);
+  };
+
   if (status === "no-account") {
     return (
       <Link
@@ -65,20 +72,24 @@ export function TenantSubscribeButton({ tenantSlug, primaryColor = "#2563eb" }: 
 
   if (status === "subscribed") {
     return (
-      <span
-        className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium"
+      <button
+        type="button"
+        onClick={handleUnsubscribe}
+        className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-opacity hover:opacity-80"
         style={{ backgroundColor: `${primaryColor}20`, color: primaryColor }}
+        title="Quitar suscripción"
       >
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden>
           <path d="M2 7l3.5 3.5L12 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
-        {justSubscribed ? "¡Suscrito!" : "Cliente"}
-      </span>
+        {justSubscribed ? "¡Suscrito!" : "Favorito ✓"}
+      </button>
     );
   }
 
   return (
     <button
+      type="button"
       onClick={handleSubscribe}
       disabled={status === "loading"}
       className="rounded-full px-4 py-1.5 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-60"
