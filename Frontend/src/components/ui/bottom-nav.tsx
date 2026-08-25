@@ -9,9 +9,9 @@ import { motion } from "framer-motion";
 const NAV_ITEMS = [
   { href: "/", icon: Home, label: "Inicio" },
   { href: "/marketplace", icon: Search, label: "Explorar" },
-  { href: "/favoritos", icon: Heart, label: "Favoritos" },
-  { href: "/pedidos", icon: ShoppingBag, label: "Pedidos" },
-  { href: "/perfil", icon: User, label: "Perfil" },
+  { href: "/mi-cuenta?section=favorites", icon: Heart, label: "Favoritos" },
+  { href: "/mi-cuenta?section=orders", icon: ShoppingBag, label: "Pedidos" },
+  { href: "/mi-cuenta?section=settings", icon: User, label: "Perfil" },
 ];
 
 export function BottomNav() {
@@ -22,7 +22,8 @@ export function BottomNav() {
       <div className="glass border-t border-white/40">
         <div className="flex items-center justify-around px-2 py-2">
           {NAV_ITEMS.map(({ href, icon: Icon, label }) => {
-            const active = pathname === href;
+            const hrefPath = href.split("?")[0];
+            const active = pathname === hrefPath;
             return (
               <Link
                 key={href}

@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import {
@@ -69,8 +69,9 @@ const NAV_ITEMS: { id: Section; label: string; icon: typeof Package }[] = [
   { id: "settings", label: "Configuración", icon: Settings },
 ];
 
-export default function MiCuentaPage() {
+function MiCuentaContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { account, hydrated, logout, subscribe, unsubscribe } = useConsumer();
   const [section, setSection] = useState<Section>("overview");
   const [search, setSearch] = useState("");
@@ -98,6 +99,14 @@ export default function MiCuentaPage() {
       router.replace("/login");
     }
   }, [hydrated, account, router]);
+
+  // Open section from query param (?section=orders|favorites|settings|...)
+  useEffect(() => {
+    const s = searchParams.get("section");
+    if (s && ["overview", "orders", "favorites", "rewards", "addresses", "settings"].includes(s)) {
+      setSection(s as Section);
+    }
+  }, [searchParams]);
 
   // Load all tenants once to build a tenantId → tenant map
   useEffect(() => {
@@ -863,5 +872,17 @@ export default function MiCuentaPage() {
         </div>
       </div>
     </TenantGoogleProvider>
+  );
+}
+
+export default function MiCuentaPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-200 border-t-orange-500" />
+      </div>
+    }>
+      <MiCuentaContent />
+    </Suspense>
   );
 }
