@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, Suspense, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Sparkles,
   Package,
@@ -23,9 +23,16 @@ import {
   X,
   Trash2,
   Pencil,
+  CheckCircle2,
+  XCircle,
 } from "lucide-react";
 import { TenantGoogleProvider } from "@/components/providers/tenant-google-provider";
 import { useConsumer } from "@/lib/use-consumer";
+import {
+  ConsumerNotificationProvider,
+  useConsumerNotifications,
+} from "@/components/consumer/consumer-notification-provider";
+import { ConsumerNotificationToasts } from "@/components/consumer/consumer-notification-toasts";
 import {
   fetchOrdersByAccount,
   fetchTenants,
@@ -73,6 +80,13 @@ function MiCuentaContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { account, hydrated, logout, subscribe, unsubscribe } = useConsumer();
+  const {
+    notifications,
+    unreadCount,
+    markAllRead,
+    markRead,
+    clearAll,
+  } = useConsumerNotifications();
   const [section, setSection] = useState<Section>("overview");
   const [search, setSearch] = useState("");
   const [orders, setOrders] = useState<OrderApiResponse[]>([]);
@@ -92,6 +106,19 @@ function MiCuentaContent() {
   });
   const [addrSubmitting, setAddrSubmitting] = useState(false);
   const [addrError, setAddrError] = useState<string | null>(null);
+  const [bellOpen, setBellOpen] = useState(false);
+  const bellRef = useRef<HTMLDivElement>(null);
+
+  // Close bell dropdown on outside click
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (bellRef.current && !bellRef.current.contains(e.target as Node)) {
+        setBellOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   // Redirect to login if not logged in
   useEffect(() => {
@@ -254,10 +281,118 @@ function MiCuentaContent() {
               />
             </div>
 
-            <button className="relative rounded-xl p-2 text-slate-500 hover:bg-slate-100">
-              <Bell className="h-5 w-5" />
-              <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-orange-500" />
-            </button>
+            <div className="relative" ref={bellRef}>
+              <button
+                type="button"
+                onClick={() => {
+                  setBellOpen((v) => !v);
+                  if (!bellOpen) markAllRead();
+                }}
+                className="relative rounded-xl p-2 text-slate-500 hover:bg-slate-100 transition-colors"
+                aria-label="Notificaciones"
+              >
+                <Bell className="h-5 w-5" />
+                {unreadCount > 0 && (
+                  <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-orange-500 px-1 text-[10px] font-bold text-white">
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </span>
+                )}
+              </button>
+
+              <AnimatePresence>
+                {bellOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -8, scale: 0.96 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -8, scale: 0.96 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute right-0 top-full z-50 mt-2 w-80 origin-top-right rounded-2xl border border-slate-200 bg-white shadow-xl"
+                  >
+                    <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
+                      <h3 className="text-sm font-semibold text-slate-800">
+                        Notificaciones
+                      </h3>
+                      {notifications.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={clearAll}
+                          className="text-xs text-slate-400 hover:text-slate-600 transition-colors"
+                        >
+                          Limpiar
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="max-h-80 overflow-y-auto">
+                      {notifications.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center py-8 text-center">
+                          <Bell className="mb-2 h-8 w-8 text-slate-300" />
+                          <p className="text-sm text-slate-400">
+                            No tienes notificaciones
+                          </p>
+                          <p className="text-xs text-slate-300">
+                            Te avisaremos de cambios en tus pedidos
+                          </p>
+                        </div>
+                      ) : (
+                        notifications.map((n) => {
+                          const Icon =
+                            n.type === "payment_verified"
+                              ? CheckCircle2
+                              : n.type === "payment_rejected"
+                              ? XCircle
+                              : Package;
+                          const iconBg =
+                            n.type === "payment_verified"
+                              ? "bg-emerald-500"
+                              : n.type === "payment_rejected"
+                              ? "bg-red-500"
+                              : "bg-[#083d77]";
+
+                          return (
+                            <button
+                              key={n.id}
+                              type="button"
+                              onClick={() => {
+                                markRead(n.id);
+                                setSection("orders");
+                                setBellOpen(false);
+                              }}
+                              className={`flex w-full items-start gap-3 border-b border-slate-50 px-4 py-3 text-left transition-colors hover:bg-slate-50 ${
+                                !n.read ? "bg-orange-50/40" : ""
+                              }`}
+                            >
+                              <div
+                                className={`mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg ${iconBg}`}
+                              >
+                                <Icon className="h-4 w-4 text-white" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm text-slate-700 leading-snug">
+                                  {n.message}
+                                </p>
+                                <p className="mt-0.5 text-xs text-slate-400">
+                                  {new Date(n.timestamp).toLocaleTimeString(
+                                    "es-ES",
+                                    {
+                                      hour: "2-digit",
+                                      minute: "2-digit",
+                                    }
+                                  )}
+                                </p>
+                              </div>
+                              {!n.read && (
+                                <span className="mt-1.5 h-2 w-2 flex-shrink-0 rounded-full bg-orange-500" />
+                              )}
+                            </button>
+                          );
+                        })
+                      )}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
 
             {/* User avatar */}
             <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white py-1.5 pl-1.5 pr-3">
@@ -882,7 +1017,10 @@ export default function MiCuentaPage() {
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-200 border-t-orange-500" />
       </div>
     }>
-      <MiCuentaContent />
+      <ConsumerNotificationProvider>
+        <MiCuentaContent />
+        <ConsumerNotificationToasts />
+      </ConsumerNotificationProvider>
     </Suspense>
   );
 }
