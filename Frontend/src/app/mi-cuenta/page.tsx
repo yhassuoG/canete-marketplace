@@ -19,10 +19,26 @@ import {
   Store,
   LogOut,
   ShoppingBag,
+  Plus,
+  X,
+  Trash2,
+  Pencil,
 } from "lucide-react";
 import { TenantGoogleProvider } from "@/components/providers/tenant-google-provider";
 import { useConsumer } from "@/lib/use-consumer";
-import { fetchOrdersByAccount, fetchTenants, OrderApiResponse, TenantApiData } from "@/lib/api";
+import {
+  fetchOrdersByAccount,
+  fetchTenants,
+  fetchRewards,
+  fetchAddresses,
+  createAddress,
+  updateAddress,
+  deleteAddress,
+  OrderApiResponse,
+  TenantApiData,
+  RewardApiData,
+  AddressApiData,
+} from "@/lib/api";
 
 // ── Status helpers ────────────────────────────────────────────────────────────
 const STATUS_FLOW: Record<string, { label: string; color: string }> = {
@@ -42,12 +58,13 @@ function statusColor(status: string): string {
   return STATUS_FLOW[status]?.color ?? "bg-slate-100 text-slate-700 border-slate-200";
 }
 
-type Section = "overview" | "orders" | "favorites" | "addresses" | "settings";
+type Section = "overview" | "orders" | "favorites" | "rewards" | "addresses" | "settings";
 
 const NAV_ITEMS: { id: Section; label: string; icon: typeof Package }[] = [
   { id: "overview", label: "Resumen", icon: Sparkles },
   { id: "orders", label: "Mis pedidos", icon: Package },
   { id: "favorites", label: "Tiendas favoritas", icon: Heart },
+  { id: "rewards", label: "Recompensas", icon: Gift },
   { id: "addresses", label: "Direcciones", icon: MapPin },
   { id: "settings", label: "Configuración", icon: Settings },
 ];
@@ -60,6 +77,20 @@ export default function MiCuentaPage() {
   const [orders, setOrders] = useState<OrderApiResponse[]>([]);
   const [ordersLoading, setOrdersLoading] = useState(true);
   const [tenantMap, setTenantMap] = useState<Record<string, TenantApiData>>({});
+  const [rewards, setRewards] = useState<RewardApiData[]>([]);
+  const [addresses, setAddresses] = useState<AddressApiData[]>([]);
+  const [showAddrModal, setShowAddrModal] = useState(false);
+  const [editingAddr, setEditingAddr] = useState<AddressApiData | null>(null);
+  const [addrForm, setAddrForm] = useState({
+    label: "Casa",
+    recipientName: "",
+    phone: "",
+    addressLine: "",
+    reference: "",
+    isDefault: false,
+  });
+  const [addrSubmitting, setAddrSubmitting] = useState(false);
+  const [addrError, setAddrError] = useState<string | null>(null);
 
   // Redirect to login if not logged in
   useEffect(() => {
@@ -86,6 +117,79 @@ export default function MiCuentaPage() {
       setOrdersLoading(false);
     });
   }, [account]);
+
+  // Load rewards (global + all active tenants — we pass no tenantSlug to get global)
+  useEffect(() => {
+    fetchRewards().then(setRewards);
+  }, []);
+
+  // Load addresses for the logged-in account
+  useEffect(() => {
+    if (!account) return;
+    fetchAddresses(account.id).then(setAddresses);
+  }, [account]);
+
+  // Address handlers
+  function openCreateAddr() {
+    setEditingAddr(null);
+    setAddrForm({ label: "Casa", recipientName: account?.name ?? "", phone: "", addressLine: "", reference: "", isDefault: false });
+    setAddrError(null);
+    setShowAddrModal(true);
+  }
+
+  function openEditAddr(a: AddressApiData) {
+    setEditingAddr(a);
+    setAddrForm({
+      label: a.label,
+      recipientName: a.recipientName ?? "",
+      phone: a.phone ?? "",
+      addressLine: a.addressLine,
+      reference: a.reference ?? "",
+      isDefault: a.isDefault,
+    });
+    setAddrError(null);
+    setShowAddrModal(true);
+  }
+
+  async function handleAddrSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (!account) return;
+    setAddrSubmitting(true);
+    setAddrError(null);
+
+    const payload = {
+      label: addrForm.label,
+      recipientName: addrForm.recipientName || null,
+      phone: addrForm.phone || null,
+      addressLine: addrForm.addressLine,
+      reference: addrForm.reference || null,
+      isDefault: addrForm.isDefault,
+    };
+
+    const result = editingAddr
+      ? await updateAddress(editingAddr.id, account.id, payload)
+      : await createAddress(account.id, payload);
+
+    if (!result.ok) {
+      setAddrError(result.error ?? "Error desconocido");
+      setAddrSubmitting(false);
+      return;
+    }
+
+    const refreshed = await fetchAddresses(account.id);
+    setAddresses(refreshed);
+    setShowAddrModal(false);
+    setAddrSubmitting(false);
+  }
+
+  async function handleAddrDelete(id: string) {
+    if (!account) return;
+    if (!confirm("¿Eliminar esta dirección?")) return;
+    const result = await deleteAddress(id, account.id);
+    if (result.ok) {
+      setAddresses((current) => current.filter((a) => a.id !== id));
+    }
+  }
 
   if (!hydrated || !account) {
     return (
@@ -551,6 +655,69 @@ export default function MiCuentaPage() {
 
 
 
+            {/* ── REWARDS ───────────────────────────────────────────── */}
+            {section === "rewards" && (
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="space-y-4"
+              >
+                <div className="flex items-center justify-between">
+                  <h1 className="text-xl font-bold text-slate-800">Recompensas disponibles</h1>
+                  <span className="rounded-full bg-amber-100 px-3 py-1 text-sm font-semibold text-amber-700">
+                    {loyaltyPoints} pts
+                  </span>
+                </div>
+                <p className="text-sm text-slate-500">
+                  Acumulas 10 puntos por cada S/1 de consumo. Canjea tus puntos por estas recompensas.
+                </p>
+                {rewards.length === 0 ? (
+                  <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center">
+                    <Gift className="mx-auto mb-3 h-10 w-10 text-slate-300" />
+                    <p className="text-sm text-slate-500">No hay recompensas disponibles por ahora.</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    {rewards.map((r) => {
+                      const canRedeem = loyaltyPoints >= r.costPoints;
+                      return (
+                        <div key={r.id} className="rounded-2xl border border-slate-200 bg-white p-5">
+                          <div className="flex items-start gap-3">
+                            {r.imageUrl ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img src={r.imageUrl} alt={r.title} className="h-16 w-16 rounded-xl object-cover" />
+                            ) : (
+                              <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-slate-100 text-3xl">
+                                {r.emoji}
+                              </div>
+                            )}
+                            <div className="flex-1">
+                              <p className="font-semibold text-slate-800">{r.title}</p>
+                              {r.description ? (
+                                <p className="mt-1 text-sm text-slate-500 line-clamp-2">{r.description}</p>
+                              ) : null}
+                              <div className="mt-2 flex items-center gap-2">
+                                <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700">
+                                  {r.costPoints} pts
+                                </span>
+                                {canRedeem ? (
+                                  <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs text-emerald-700">Disponible</span>
+                                ) : (
+                                  <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500">
+                                    Faltan {r.costPoints - loyaltyPoints} pts
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </motion.div>
+            )}
+
             {/* ── ADDRESSES ──────────────────────────────────────────── */}
             {section === "addresses" && (
               <motion.div
@@ -560,29 +727,82 @@ export default function MiCuentaPage() {
               >
                 <div className="flex items-center justify-between">
                   <h1 className="text-xl font-bold text-slate-800">Mis direcciones</h1>
-                  <button className="rounded-xl bg-gradient-to-br from-coral to-orange-500 px-4 py-2 text-sm font-medium text-white">
-                    + Agregar
+                  <button
+                    type="button"
+                    onClick={openCreateAddr}
+                    className="flex items-center gap-1 rounded-xl bg-gradient-to-br from-coral to-orange-500 px-4 py-2 text-sm font-medium text-white"
+                  >
+                    <Plus className="h-4 w-4" /> Agregar
                   </button>
                 </div>
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  {[
-                    { label: "Casa", addr: "Av. San Vicente 123, San Vicente de Cañete", default: true },
-                    { label: "Trabajo", addr: "Mz A Lt 14, Cerro Azul, Cañete", default: false },
-                  ].map((a) => (
-                    <div key={a.label} className="rounded-2xl border border-slate-200 bg-white p-5">
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-center gap-2">
-                          <MapPin className="h-4 w-4 text-orange-500" />
-                          <p className="font-medium text-slate-800">{a.label}</p>
-                          {a.default && (
-                            <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs text-emerald-700">Predeterminada</span>
-                          )}
+                {addresses.length === 0 ? (
+                  <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center">
+                    <MapPin className="mx-auto mb-3 h-10 w-10 text-slate-300" />
+                    <p className="text-sm text-slate-500">No tienes direcciones guardadas.</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    {addresses.map((a) => (
+                      <div key={a.id} className="rounded-2xl border border-slate-200 bg-white p-5">
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-center gap-2">
+                            <MapPin className="h-4 w-4 text-orange-500" />
+                            <p className="font-medium text-slate-800">{a.label}</p>
+                            {a.isDefault && (
+                              <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs text-emerald-700">Predeterminada</span>
+                            )}
+                          </div>
+                          <div className="flex gap-1">
+                            <button type="button" onClick={() => openEditAddr(a)} className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600">
+                              <Pencil className="h-3.5 w-3.5" />
+                            </button>
+                            <button type="button" onClick={() => handleAddrDelete(a.id)} className="rounded-lg p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600">
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
                         </div>
+                        <p className="mt-2 text-sm text-slate-500">{a.addressLine}</p>
+                        {a.recipientName ? <p className="mt-1 text-xs text-slate-400">Para: {a.recipientName}</p> : null}
+                        {a.phone ? <p className="text-xs text-slate-400">Tel: {a.phone}</p> : null}
+                        {a.reference ? <p className="mt-1 text-xs text-slate-400">Ref: {a.reference}</p> : null}
                       </div>
-                      <p className="mt-2 text-sm text-slate-500">{a.addr}</p>
+                    ))}
+                  </div>
+                )}
+
+                {/* Modal crear/editar dirección */}
+                {showAddrModal ? (
+                  <div className="fixed inset-0 z-30 flex items-center justify-center bg-slate-950/45 px-4 py-10 backdrop-blur-sm">
+                    <div className="w-full max-w-lg rounded-[2rem] bg-white p-6 shadow-2xl">
+                      <div className="mb-6 flex items-start justify-between">
+                        <h2 className="text-xl font-semibold text-slate-800">{editingAddr ? "Editar dirección" : "Nueva dirección"}</h2>
+                        <button type="button" onClick={() => setShowAddrModal(false)} className="rounded-full border border-slate-200 p-2 text-slate-500">
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                      <form className="grid gap-3" onSubmit={handleAddrSubmit}>
+                        <div className="grid gap-3 sm:grid-cols-2">
+                          <input value={addrForm.label} onChange={(e) => setAddrForm((c) => ({ ...c, label: e.target.value }))} placeholder="Etiqueta (Casa, Trabajo...)" className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm outline-none" required />
+                          <input value={addrForm.recipientName} onChange={(e) => setAddrForm((c) => ({ ...c, recipientName: e.target.value }))} placeholder="Nombre del destinatario" className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm outline-none" />
+                        </div>
+                        <input value={addrForm.phone} onChange={(e) => setAddrForm((c) => ({ ...c, phone: e.target.value }))} placeholder="Teléfono" className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm outline-none" />
+                        <textarea value={addrForm.addressLine} onChange={(e) => setAddrForm((c) => ({ ...c, addressLine: e.target.value }))} placeholder="Dirección completa" className="min-h-20 rounded-xl border border-slate-200 px-4 py-2.5 text-sm outline-none" required />
+                        <textarea value={addrForm.reference} onChange={(e) => setAddrForm((c) => ({ ...c, reference: e.target.value }))} placeholder="Referencia (opcional)" className="min-h-16 rounded-xl border border-slate-200 px-4 py-2.5 text-sm outline-none" />
+                        <label className="flex items-center gap-2 text-sm text-slate-600">
+                          <input type="checkbox" checked={addrForm.isDefault} onChange={(e) => setAddrForm((c) => ({ ...c, isDefault: e.target.checked }))} className="h-4 w-4 rounded border-slate-300" />
+                          Establecer como predeterminada
+                        </label>
+                        {addrError ? <p className="text-sm text-rose-600">{addrError}</p> : null}
+                        <div className="flex justify-end gap-3">
+                          <button type="button" onClick={() => setShowAddrModal(false)} className="rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-medium text-slate-600">Cancelar</button>
+                          <button type="submit" disabled={addrSubmitting} className="rounded-xl bg-gradient-to-br from-coral to-orange-500 px-5 py-2.5 text-sm font-medium text-white disabled:opacity-60">
+                            {addrSubmitting ? "Guardando..." : "Guardar"}
+                          </button>
+                        </div>
+                      </form>
                     </div>
-                  ))}
-                </div>
+                  </div>
+                ) : null}
               </motion.div>
             )}
 

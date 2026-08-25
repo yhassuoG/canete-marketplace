@@ -1488,3 +1488,162 @@ export async function deleteEvent(id: string): Promise<{ ok: boolean; error?: st
     return { ok: false, error: String(e) };
   }
 }
+
+// ── Rewards (configurable by admin) ──────────────────────────────────────────
+
+export interface RewardApiData {
+  id: string;
+  tenantId: string | null;
+  title: string;
+  description: string | null;
+  costPoints: number;
+  emoji: string;
+  imageUrl: string | null;
+  isActive: boolean;
+  createdAt: string;
+}
+
+/** Public: list active rewards (optionally filtered by tenant) */
+export async function fetchRewards(tenantSlug?: string): Promise<RewardApiData[]> {
+  try {
+    const params = tenantSlug ? `?tenantSlug=${encodeURIComponent(tenantSlug)}` : "";
+    const res = await fetch(`${API_BASE}/api/v1/rewards${params}`, { cache: "no-store" });
+    if (!res.ok) return [];
+    return (await res.json()) as RewardApiData[];
+  } catch {
+    return [];
+  }
+}
+
+/** Admin: list all rewards */
+export async function fetchAllRewards(): Promise<RewardApiData[]> {
+  try {
+    const res = await fetch(`${API_BASE}/api/v1/rewards/all`, { cache: "no-store" });
+    if (!res.ok) return [];
+    return (await res.json()) as RewardApiData[];
+  } catch {
+    return [];
+  }
+}
+
+export interface RewardPayload {
+  tenantId?: string | null;
+  title: string;
+  description?: string | null;
+  costPoints: number;
+  emoji?: string;
+  imageUrl?: string | null;
+}
+
+export async function createReward(payload: RewardPayload): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const res = await fetch(`${API_BASE}/api/v1/rewards`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) return { ok: false, error: `Error ${res.status}` };
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: String(e) };
+  }
+}
+
+export async function updateReward(id: string, payload: Partial<RewardPayload> & { isActive?: boolean }): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const res = await fetch(`${API_BASE}/api/v1/rewards/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) return { ok: false, error: `Error ${res.status}` };
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: String(e) };
+  }
+}
+
+export async function deleteReward(id: string): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const res = await fetch(`${API_BASE}/api/v1/rewards/${id}`, { method: "DELETE" });
+    if (!res.ok) return { ok: false, error: `Error ${res.status}` };
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: String(e) };
+  }
+}
+
+// ── Addresses (customer delivery addresses) ─────────────────────────────────
+
+export interface AddressApiData {
+  id: string;
+  accountId: string;
+  label: string;
+  recipientName: string | null;
+  phone: string | null;
+  addressLine: string;
+  reference: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  isDefault: boolean;
+  createdAt: string;
+}
+
+export async function fetchAddresses(accountId: string): Promise<AddressApiData[]> {
+  try {
+    const res = await fetch(`${API_BASE}/api/v1/addresses?accountId=${accountId}`, { cache: "no-store" });
+    if (!res.ok) return [];
+    return (await res.json()) as AddressApiData[];
+  } catch {
+    return [];
+  }
+}
+
+export interface AddressPayload {
+  label: string;
+  recipientName?: string | null;
+  phone?: string | null;
+  addressLine: string;
+  reference?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  isDefault?: boolean;
+}
+
+export async function createAddress(accountId: string, payload: AddressPayload): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const res = await fetch(`${API_BASE}/api/v1/addresses`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ accountId, ...payload }),
+    });
+    if (!res.ok) return { ok: false, error: `Error ${res.status}` };
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: String(e) };
+  }
+}
+
+export async function updateAddress(id: string, accountId: string, payload: Partial<AddressPayload>): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const res = await fetch(`${API_BASE}/api/v1/addresses/${id}?accountId=${accountId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) return { ok: false, error: `Error ${res.status}` };
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: String(e) };
+  }
+}
+
+export async function deleteAddress(id: string, accountId: string): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const res = await fetch(`${API_BASE}/api/v1/addresses/${id}?accountId=${accountId}`, { method: "DELETE" });
+    if (!res.ok) return { ok: false, error: `Error ${res.status}` };
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: String(e) };
+  }
+}
