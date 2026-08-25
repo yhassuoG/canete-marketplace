@@ -23,7 +23,7 @@ import {
 import { TenantGoogleProvider } from "@/components/providers/tenant-google-provider";
 import { useConsumer } from "@/lib/use-consumer";
 import { categories, featuredBusinesses } from "@/lib/data";
-import { fetchOrdersByCustomer, fetchTenants, OrderApiResponse, TenantApiData } from "@/lib/api";
+import { fetchOrdersByAccount, fetchTenants, OrderApiResponse, TenantApiData } from "@/lib/api";
 
 // ── Status helpers ────────────────────────────────────────────────────────────
 const STATUS_FLOW: Record<string, { label: string; color: string }> = {
@@ -79,11 +79,11 @@ export default function MiCuentaPage() {
     });
   }, []);
 
-  // Load orders for the logged-in customer
+  // Load orders for the logged-in marketplace account
   useEffect(() => {
     if (!account) return;
     setOrdersLoading(true);
-    fetchOrdersByCustomer(account.id).then((data) => {
+    fetchOrdersByAccount(account.id).then((data) => {
       setOrders(data);
       setOrdersLoading(false);
     });

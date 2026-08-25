@@ -346,6 +346,7 @@ export interface OrderItemApi {
 export interface CreateOrderPayload {
   tenantId: string;
   customerId?: string;
+  accountId?: string;
   customerName: string;
   customerPhone?: string;
   customerAddress?: string;
@@ -500,6 +501,19 @@ export async function fetchOrdersByCustomer(
 ): Promise<OrderApiResponse[]> {
   try {
     const res = await fetch(`${API_BASE}/api/v1/orders/customer/${customerId}`);
+    if (!res.ok) return [];
+    return (await res.json()) as OrderApiResponse[];
+  } catch {
+    return [];
+  }
+}
+
+/** Lista todos los pedidos de una cuenta de marketplace (consumidor logeado). */
+export async function fetchOrdersByAccount(
+  accountId: string
+): Promise<OrderApiResponse[]> {
+  try {
+    const res = await fetch(`${API_BASE}/api/v1/orders/account/${accountId}`);
     if (!res.ok) return [];
     return (await res.json()) as OrderApiResponse[];
   } catch {
