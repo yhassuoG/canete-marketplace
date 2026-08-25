@@ -262,6 +262,8 @@ export function buildTenantFromApi(apiTenant: TenantApiData): Tenant {
     allowsDelivery: apiTenant.allowsDelivery,
     allowsPickup: apiTenant.allowsPickup,
     deliveryFee: apiTenant.deliveryFee,
+    cashEnabled: apiTenant.cashEnabled,
+    cardEnabled: apiTenant.cardEnabled,
     yapeEnabled: apiTenant.yapeEnabled,
     yapePhone: apiTenant.yapePhone,
     yapeHolder: apiTenant.yapeHolder,
