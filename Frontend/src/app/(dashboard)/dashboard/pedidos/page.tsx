@@ -20,12 +20,19 @@ import {
   MapPin,
   StickyNote,
   AlertCircle,
+  Eye,
+  Loader2,
+  Smartphone,
 } from "lucide-react";
 import {
   fetchOrdersByTenant,
   fetchTenant,
   updateOrderStatus,
+  fetchPaymentProofs,
+  confirmPaymentProof,
+  rejectPaymentProof,
   type OrderApiResponse,
+  type PaymentProofApiData,
 } from "@/lib/api";
 import { getAuthUser } from "@/lib/auth";
 
@@ -80,6 +87,12 @@ export default function DashboardPedidosPage() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  // Payment proof state
+  const [proofsByOrder, setProofsByOrder] = useState<Record<string, PaymentProofApiData[]>>({});
+  const [viewProof, setViewProof] = useState<PaymentProofApiData | null>(null);
+  const [rejectingProof, setRejectingProof] = useState<{ proofId: string; orderId: string } | null>(null);
+  const [rejectReason, setRejectReason] = useState("");
+  const [actingProof, setActingProof] = useState<string | null>(null);
 
   // Resolve tenant from logged-in user
   useEffect(() => {
@@ -137,6 +150,69 @@ export default function DashboardPedidosPage() {
       setOrders((prev) => prev.map((o) => (o.id === orderId ? updated : o)));
     }
     setUpdatingId(null);
+  }
+
+  // Load payment proofs for an order (when expanding)
+  async function loadProofsForOrder(orderId: string) {
+    if (proofsByOrder[orderId]) return;
+    const proofs = await fetchPaymentProofs(orderId);
+    setProofsByOrder((prev) => ({ ...prev, [orderId]: proofs }));
+  }
+
+  // Approve payment proof inline
+  async function handleConfirmProof(proofId: string, orderId: string) {
+    const user = getAuthUser();
+    setActingProof(proofId);
+    const res = await confirmPaymentProof(proofId, user?.name);
+    if (res) {
+      setProofsByOrder((prev) => ({
+        ...prev,
+        [orderId]: (prev[orderId] ?? []).map((p) => (p.id === proofId ? res : p)),
+      }));
+      setOrders((prev) => prev.map((o) => (o.id === orderId ? { ...o, paymentStatus: "APPROVED" } : o)));
+      setViewProof(null);
+    }
+    setActingProof(null);
+  }
+
+  // Reject payment proof inline
+  async function handleRejectProof(proofId: string, orderId: string) {
+    if (!rejectReason.trim()) return;
+    const user = getAuthUser();
+    setActingProof(proofId);
+    const res = await rejectPaymentProof(proofId, rejectReason, user?.name);
+    if (res) {
+      setProofsByOrder((prev) => ({
+        ...prev,
+        [orderId]: (prev[orderId] ?? []).map((p) => (p.id === proofId ? res : p)),
+      }));
+      setOrders((prev) => prev.map((o) => (o.id === orderId ? { ...o, paymentStatus: "REJECTED" } : o)));
+      setRejectingProof(null);
+      setRejectReason("");
+      setViewProof(null);
+    }
+    setActingProof(null);
+  }
+
+  // Payment badge info for an order
+  function getPaymentBadge(order: OrderApiResponse) {
+    const method = order.paymentMethod?.toLowerCase() ?? "";
+    if (method === "cash" || method === "efectivo") {
+      return { label: "Efectivo", color: "bg-slate-100 text-slate-600 border-slate-200" };
+    }
+    if (method === "card" || method === "tarjeta") {
+      return { label: "Tarjeta", color: "bg-blue-50 text-blue-700 border-blue-200" };
+    }
+    if (order.paymentStatus === "APPROVED") {
+      return { label: "Pago verificado", color: "bg-emerald-50 text-emerald-700 border-emerald-200" };
+    }
+    if (order.paymentStatus === "PENDING_VERIFICATION") {
+      return { label: "Pago pendiente", color: "bg-amber-50 text-amber-700 border-amber-200" };
+    }
+    if (order.paymentStatus === "REJECTED") {
+      return { label: "Pago rechazado", color: "bg-red-50 text-red-600 border-red-200" };
+    }
+    return { label: "Sin comprobante", color: "bg-slate-100 text-slate-400 border-slate-200" };
   }
 
   // Filtered orders
@@ -275,7 +351,16 @@ export default function DashboardPedidosPage() {
                 {/* Order header row */}
                 <div
                   className="flex items-center gap-4 px-6 py-4 cursor-pointer hover:bg-slate-50 transition-colors"
-                  onClick={() => setExpandedId(isExpanded ? null : order.id)}
+                  onClick={() => {
+                    if (isExpanded) {
+                      setExpandedId(null);
+                    } else {
+                      setExpandedId(order.id);
+                      if (order.paymentStatus === "PENDING_VERIFICATION" && !proofsByOrder[order.id]) {
+                        loadProofsForOrder(order.id);
+                      }
+                    }
+                  }}
                 >
                   {/* Order ID + status icon */}
                   <div className="flex items-center gap-3 flex-shrink-0">
@@ -309,6 +394,16 @@ export default function DashboardPedidosPage() {
                   <span className={`rounded-full border px-3 py-1 text-xs font-semibold ${statusInfo.color}`}>
                     {statusInfo.label}
                   </span>
+
+                  {/* Payment badge */}
+                  {(() => {
+                    const pb = getPaymentBadge(order);
+                    return (
+                      <span className={`hidden md:inline-flex rounded-full border px-2.5 py-1 text-xs font-medium ${pb.color}`}>
+                        {pb.label}
+                      </span>
+                    );
+                  })()}
 
                   {/* Expand chevron */}
                   <ChevronDown
@@ -391,6 +486,101 @@ export default function DashboardPedidosPage() {
                           </div>
                         </div>
 
+                        {/* Payment verification (Yape/Plin) */}
+                        {order.paymentMethod && ["yape", "plin"].includes(order.paymentMethod.toLowerCase()) && (
+                          <div className="rounded-2xl border border-slate-200 bg-white p-4 space-y-3">
+                            <div className="flex items-center justify-between">
+                              <p className="text-xs font-semibold uppercase tracking-widest text-slate-400">
+                                Verificación de pago ({order.paymentMethod.toUpperCase()})
+                              </p>
+                              {(() => {
+                                const pb = getPaymentBadge(order);
+                                return (
+                                  <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${pb.color}`}>
+                                    {pb.label}
+                                  </span>
+                                );
+                              })()}
+                            </div>
+
+                            {order.paymentStatus === "PENDING_VERIFICATION" && (
+                              <>
+                                {proofsByOrder[order.id]?.length > 0 ? (
+                                  <>
+                                    <div className="flex gap-3 flex-wrap">
+                                      {proofsByOrder[order.id].map((proof) => (
+                                        <div key={proof.id} className="relative group">
+                                          <img
+                                            src={proof.fileUrl}
+                                            alt="Comprobante"
+                                            className="h-24 w-24 rounded-lg border border-slate-200 object-cover cursor-pointer hover:opacity-80 transition-opacity"
+                                            onClick={() => setViewProof(proof)}
+                                          />
+                                          <button
+                                            onClick={() => setViewProof(proof)}
+                                            className="absolute inset-0 flex items-center justify-center rounded-lg bg-black/0 group-hover:bg-black/20 transition-colors"
+                                          >
+                                            <Eye className="h-5 w-5 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                                          </button>
+                                        </div>
+                                      ))}
+                                    </div>
+                                    <div className="flex gap-2">
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleConfirmProof(proofsByOrder[order.id][0].id, order.id);
+                                        }}
+                                        disabled={actingProof === proofsByOrder[order.id][0].id}
+                                        className="flex items-center gap-2 rounded-xl bg-emerald-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-600 transition-colors disabled:opacity-50"
+                                      >
+                                        {actingProof === proofsByOrder[order.id][0].id ? (
+                                          <Loader2 className="h-4 w-4 animate-spin" />
+                                        ) : (
+                                          <CheckCircle2 className="h-4 w-4" />
+                                        )}
+                                        Aprobar pago
+                                      </button>
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setRejectingProof({ proofId: proofsByOrder[order.id][0].id, orderId: order.id });
+                                        }}
+                                        className="flex items-center gap-2 rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm font-semibold text-red-600 hover:bg-red-50 transition-colors"
+                                      >
+                                        <XCircle className="h-4 w-4" />
+                                        Rechazar
+                                      </button>
+                                    </div>
+                                  </>
+                                ) : (
+                                  <p className="text-sm text-slate-400 flex items-center gap-2">
+                                    <Loader2 className="h-4 w-4 animate-spin" /> Cargando comprobante...
+                                  </p>
+                                )}
+                              </>
+                            )}
+
+                            {order.paymentStatus === "APPROVED" && (
+                              <p className="text-sm text-emerald-600 flex items-center gap-2">
+                                <CheckCircle2 className="h-4 w-4" />
+                                Pago verificado{order.paymentVerifiedBy && ` por ${order.paymentVerifiedBy}`}
+                              </p>
+                            )}
+
+                            {order.paymentStatus === "REJECTED" && (
+                              <div className="space-y-1">
+                                <p className="text-sm text-red-600 flex items-center gap-2">
+                                  <XCircle className="h-4 w-4" /> Pago rechazado
+                                </p>
+                                {order.paymentRejectionReason && (
+                                  <p className="text-xs text-red-500 pl-6">Motivo: {order.paymentRejectionReason}</p>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        )}
+
                         {/* Action buttons */}
                         <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-200">
                           {canAdvance && (
@@ -443,6 +633,130 @@ export default function DashboardPedidosPage() {
           })}
         </div>
       )}
+
+      {/* Modal: view payment receipt */}
+      <AnimatePresence>
+        {viewProof && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+            onClick={() => setViewProof(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.95 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.95 }}
+              className="relative max-w-md w-full rounded-2xl bg-white p-6"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h3 className="font-bold text-ink mb-2">
+                Comprobante #{viewProof.orderId.slice(0, 8).toUpperCase()}
+              </h3>
+              <img
+                src={viewProof.fileUrl}
+                alt="Comprobante"
+                className="w-full rounded-xl border border-slate-200"
+              />
+              <div className="mt-3 space-y-1 text-sm text-slate-600">
+                <p>Método: <span className="font-medium">{viewProof.paymentMethod.toUpperCase()}</span></p>
+                <p>Subido: {formatDate(viewProof.createdAt)}</p>
+                {viewProof.verifiedBy && <p>Verificado por: {viewProof.verifiedBy}</p>}
+                {viewProof.rejectionReason && (
+                  <p className="text-red-600">Motivo rechazo: {viewProof.rejectionReason}</p>
+                )}
+              </div>
+
+              {viewProof.status === "PENDING_VERIFICATION" && (
+                <div className="mt-4 flex gap-2">
+                  <button
+                    onClick={() => handleConfirmProof(viewProof.id, viewProof.orderId)}
+                    disabled={actingProof === viewProof.id}
+                    className="flex-1 rounded-xl bg-emerald-500 py-2.5 text-sm font-bold text-white hover:bg-emerald-600 disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    {actingProof === viewProof.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
+                    Aprobar pago
+                  </button>
+                  <button
+                    onClick={() => {
+                      setRejectingProof({ proofId: viewProof.id, orderId: viewProof.orderId });
+                      setViewProof(null);
+                    }}
+                    className="flex-1 rounded-xl bg-red-100 py-2.5 text-sm font-bold text-red-700 hover:bg-red-200 flex items-center justify-center gap-2"
+                  >
+                    <XCircle className="h-4 w-4" />
+                    Rechazar
+                  </button>
+                </div>
+              )}
+
+              <button
+                onClick={() => setViewProof(null)}
+                className="mt-4 w-full rounded-xl border border-slate-200 py-2 text-sm text-slate-600 hover:bg-slate-50"
+              >
+                Cerrar
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Modal: reject reason */}
+      <AnimatePresence>
+        {rejectingProof && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+            onClick={() => {
+              setRejectingProof(null);
+              setRejectReason("");
+            }}
+          >
+            <motion.div
+              initial={{ scale: 0.95 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.95 }}
+              className="relative max-w-sm w-full rounded-2xl bg-white p-6"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h3 className="font-bold text-ink mb-2">Rechazar comprobante</h3>
+              <p className="text-sm text-slate-500 mb-3">
+                Indica el motivo del rechazo. El cliente podrá verlo y reenviar su comprobante.
+              </p>
+              <textarea
+                value={rejectReason}
+                onChange={(e) => setRejectReason(e.target.value)}
+                rows={3}
+                placeholder="Ej: El monto no coincide con el total del pedido"
+                className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-200"
+              />
+              <div className="mt-4 flex gap-2">
+                <button
+                  onClick={() => {
+                    setRejectingProof(null);
+                    setRejectReason("");
+                  }}
+                  className="flex-1 rounded-xl border border-slate-200 py-2 text-sm text-slate-600 hover:bg-slate-50"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={() => {
+                    if (rejectingProof) handleRejectProof(rejectingProof.proofId, rejectingProof.orderId);
+                  }}
+                  disabled={!rejectReason.trim() || (rejectingProof ? actingProof === rejectingProof.proofId : false)}
+                  className="flex-1 rounded-xl bg-red-500 py-2 text-sm font-bold text-white hover:bg-red-600 disabled:opacity-50"
+                >
+                  Confirmar rechazo
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

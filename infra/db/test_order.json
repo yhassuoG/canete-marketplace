@@ -1,0 +1,10 @@
+{
+  "tenantId": "eecfd498-1c5b-4096-864a-1b4bd4a61200",
+  "customerName": "Cliente Test",
+  "customerPhone": "+51 999 123 456",
+  "deliveryType": "pickup",
+  "paymentMethod": "yape",
+  "items": [
+    {"productId": "test", "name": "Personal Makis", "price": 20, "qty": 1}
+  ]
+}
