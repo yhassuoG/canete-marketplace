@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Eye, EyeOff, LogIn, Shield, ShoppingBag, Store } from "lucide-react";
+import { Eye, EyeOff, LogIn, ShoppingBag, Store } from "lucide-react";
 import {
   setAuthCookie,
   getAuthUser,
@@ -14,14 +14,6 @@ import { fetchTenants } from "@/lib/api";
 import { getApiBase } from "@/lib/api-base";
 import { GoogleSignInButton } from "@/components/consumer/google-sign-in-button";
 import { TenantGoogleProvider } from "@/components/providers/tenant-google-provider";
-
-const DEMO_ACCOUNTS = [
-  { label: "Super Admin", email: "admin@canete.app", password: "admin123", color: "#6366f1" },
-  { label: "Muelle Pacífico", email: "muelle@demo.com", password: "demo123", color: "#0369a1" },
-  { label: "Paraíso Lunahuaná", email: "paraiso@demo.com", password: "demo123", color: "#16a34a" },
-  { label: "Viña del Sol", email: "vina@demo.com", password: "demo123", color: "#c2410c" },
-  { label: "Hotel Luna", email: "hotel@demo.com", password: "demo123", color: "#4338ca" },
-];
 
 type Tab = "consumer" | "business";
 
@@ -48,12 +40,6 @@ export default function LoginPage() {
       router.replace(user.role === "admin" ? "/admin" : "/dashboard");
     }
   }, [router, tab]);
-
-  function handleDemoLogin(acc: (typeof DEMO_ACCOUNTS)[0]) {
-    setEmail(acc.email);
-    setPassword(acc.password);
-    setError("");
-  }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -302,46 +288,6 @@ export default function LoginPage() {
             </motion.div>
           )}
 
-          {/* Demo accounts (only on business tab) */}
-          {tab === "business" && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.25 }}
-              className="mt-6"
-            >
-              <div className="mb-3 flex items-center gap-2">
-                <Shield className="h-3.5 w-3.5 text-white/30" />
-                <p className="text-xs font-medium text-white/30 uppercase tracking-widest">
-                  Cuentas demo
-                </p>
-              </div>
-              <div className="grid grid-cols-1 gap-2">
-                {DEMO_ACCOUNTS.map((acc) => (
-                  <button
-                    key={acc.email}
-                    type="button"
-                    onClick={() => handleDemoLogin(acc)}
-                    className="flex items-center gap-3 rounded-xl border border-white/5 bg-white/5 px-4 py-3 text-left transition hover:border-white/15 hover:bg-white/10 group"
-                  >
-                    <div
-                      className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg text-xs font-bold text-white"
-                      style={{ background: acc.color }}
-                    >
-                      {acc.label[0]}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-white/80 group-hover:text-white transition">{acc.label}</p>
-                      <p className="text-xs text-white/30">{acc.email}</p>
-                    </div>
-                    <span className="text-xs text-white/20 group-hover:text-white/50 transition font-mono">
-                      {acc.password}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </motion.div>
-          )}
         </div>
       </main>
     </TenantGoogleProvider>
