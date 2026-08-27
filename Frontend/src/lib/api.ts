@@ -1703,6 +1703,156 @@ export async function deleteEvent(id: string): Promise<{ ok: boolean; error?: st
   }
 }
 
+// ════════════════════════════════════════════════════════════════════════════
+//  FACTURACIÓN ELECTRÓNICA SUNAT
+// ════════════════════════════════════════════════════════════════════════════
+
+export interface TenantTaxConfig {
+  id?: string;
+  tenantId?: string;
+  ruc: string;
+  razonSocial: string;
+  nombreComercial?: string;
+  domicilioFiscal: string;
+  ubigeo: string;
+  urbanizacion?: string;
+  distrito: string;
+  provincia: string;
+  departamento: string;
+  codigoPais?: string;
+  igvRate?: number;
+  serieBoleta?: string;
+  serieFactura?: string;
+  certBase64?: string;
+  certPassword?: string;
+  certAlias?: string;
+  sunatMode?: string;
+  solUser?: string;
+  solPassword?: string;
+  enabled: boolean;
+}
+
+export interface Invoice {
+  id: string;
+  tenantId: string;
+  orderId?: string;
+  type: string;
+  serie: string;
+  number: number;
+  documentNumber: string;
+  customerDocType: string;
+  customerDocNumber: string;
+  customerName: string;
+  total: number;
+  taxableBase: number;
+  igvAmount: number;
+  status: string;
+  cdrCode?: string;
+  cdrDescription?: string;
+  sunatError?: string;
+  issueDate: string;
+  createdAt: string;
+}
+
+/** Obtiene la configuración tributaria de un tenant */
+export async function getTaxConfig(tenantId: string): Promise<TenantTaxConfig | null> {
+  try {
+    const res = await fetch(`${API_BASE}/api/v1/invoicing/config/${tenantId}`);
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (!data || !data.ruc) return null;
+    return data;
+  } catch {
+    return null;
+  }
+}
+
+/** Guarda la configuración tributaria de un tenant */
+export async function saveTaxConfig(tenantId: string, config: TenantTaxConfig): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const res = await fetch(`${API_BASE}/api/v1/invoicing/config/${tenantId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(config),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => null);
+      return { ok: false, error: data?.error || `Error ${res.status}` };
+    }
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: String(e) };
+  }
+}
+
+/** Habilita/deshabilita la facturación de un tenant */
+export async function toggleInvoicingEnabled(tenantId: string, enabled: boolean): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const res = await fetch(`${API_BASE}/api/v1/invoicing/config/${tenantId}/enabled`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ enabled }),
+    });
+    if (!res.ok) return { ok: false, error: `Error ${res.status}` };
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: String(e) };
+  }
+}
+
+/** Emite una factura/boleta desde una orden */
+export async function issueInvoice(
+  orderId: string,
+  type: "factura" | "boleta",
+  customerDocType: string,
+  customerDocNumber: string
+): Promise<{ ok: boolean; invoice?: Invoice; error?: string }> {
+  try {
+    const res = await fetch(`${API_BASE}/api/v1/invoicing/issue`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ orderId, type, customerDocType, customerDocNumber }),
+    });
+    const data = await res.json();
+    if (!res.ok) return { ok: false, error: data?.error || `Error ${res.status}` };
+    return { ok: true, invoice: data };
+  } catch (e) {
+    return { ok: false, error: String(e) };
+  }
+}
+
+/** Lista las facturas de un tenant */
+export async function listInvoicesByTenant(tenantId: string): Promise<Invoice[]> {
+  try {
+    const res = await fetch(`${API_BASE}/api/v1/invoicing/tenant/${tenantId}`);
+    if (!res.ok) return [];
+    return await res.json();
+  } catch {
+    return [];
+  }
+}
+
+/** Lista las facturas de una orden */
+export async function listInvoicesByOrder(orderId: string): Promise<Invoice[]> {
+  try {
+    const res = await fetch(`${API_BASE}/api/v1/invoicing/order/${orderId}`);
+    if (!res.ok) return [];
+    return await res.json();
+  } catch {
+    return [];
+  }
+}
+
+/** URL para descargar PDF de una factura */
+export function getInvoicePdfUrl(invoiceId: string): string {
+  return `${API_BASE}/api/v1/invoicing/${invoiceId}/pdf`;
+}
+
+/** URL para descargar XML de una factura */
+export function getInvoiceXmlUrl(invoiceId: string): string {
+  return `${API_BASE}/api/v1/invoicing/${invoiceId}/xml`;
+}
+
 // ── Rewards (configurable by admin) ──────────────────────────────────────────
 
 export interface RewardApiData {
