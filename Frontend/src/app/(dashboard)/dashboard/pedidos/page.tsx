@@ -45,9 +45,10 @@ const STATUS_FLOW: Record<string, { label: string; color: string; icon: typeof C
   ready_for_pickup: { label: "Listo p/ recoger", color: "bg-teal-50 text-teal-700 border-teal-200",     icon: CheckCircle2, next: "delivered" },
   delivered:        { label: "Entregado",   color: "bg-emerald-50 text-emerald-700 border-emerald-200", icon: CheckCircle2 },
   cancelled:        { label: "Cancelado",   color: "bg-red-50 text-red-600 border-red-200",            icon: XCircle },
+  payment_rejected: { label: "Pago rechazado", color: "bg-red-50 text-red-600 border-red-200",          icon: XCircle },
 };
 
-const STATUS_ORDER = ["pending", "confirmed", "preparing", "on_the_way", "ready_for_pickup", "delivered", "cancelled"];
+const STATUS_ORDER = ["pending", "confirmed", "preparing", "on_the_way", "ready_for_pickup", "delivered", "cancelled", "payment_rejected"];
 
 const PAYMENT_LABELS: Record<string, string> = {
   cash: "Efectivo",
@@ -186,7 +187,7 @@ export default function DashboardPedidosPage() {
         ...prev,
         [orderId]: (prev[orderId] ?? []).map((p) => (p.id === proofId ? res : p)),
       }));
-      setOrders((prev) => prev.map((o) => (o.id === orderId ? { ...o, paymentStatus: "REJECTED" } : o)));
+      setOrders((prev) => prev.map((o) => (o.id === orderId ? { ...o, paymentStatus: "REJECTED", status: "payment_rejected" } : o)));
       setRejectingProof(null);
       setRejectReason("");
       setViewProof(null);
