@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { clsx } from "clsx";
 import {
@@ -21,8 +22,9 @@ import {
   LogOut,
   Smartphone,
 } from "lucide-react";
-import { clearAuthCookie } from "@/lib/auth";
+import { clearAuthCookie, getAuthUser } from "@/lib/auth";
 import { useNotifications } from "@/components/dashboard/notification-provider";
+import { fetchTenant } from "@/lib/api";
 
 const NAV = [
   {
@@ -81,6 +83,18 @@ export function BusinessSidebar({
   const pathname = usePathname();
   const router = useRouter();
   const { unreadCount } = useNotifications();
+  const [realTenantName, setRealTenantName] = useState<string | null>(null);
+
+  useEffect(() => {
+    const user = getAuthUser();
+    if (user?.tenantSlug) {
+      fetchTenant(user.tenantSlug).then((t) => {
+        if (t) setRealTenantName(t.name);
+      });
+    }
+  }, []);
+
+  const displayName = realTenantName ?? tenantName;
 
   function handleLogout() {
     clearAuthCookie();
@@ -98,10 +112,10 @@ export function BusinessSidebar({
           className="flex h-9 w-9 items-center justify-center rounded-xl text-white text-sm font-bold shadow"
           style={{ background: gradient }}
         >
-          {tenantName[0]}
+          {displayName[0]}
         </div>
         <div>
-          <p className="text-sm font-semibold text-ink truncate max-w-[120px]">{tenantName}</p>
+          <p className="text-sm font-semibold text-ink truncate max-w-[120px]">{displayName}</p>
           <p className="text-[10px] uppercase tracking-widest text-slate-400">Panel de negocio</p>
         </div>
       </div>

@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Menu, X } from "lucide-react";
 import { BusinessSidebar } from "./business-sidebar";
 import { NotificationProvider } from "./notification-provider";
 import { NotificationToasts } from "./notification-toasts";
+import { fetchTenant } from "@/lib/api";
 
 /**
  * Shell del dashboard de negocio: en desktop muestra el sidebar fijo (w-60),
@@ -27,6 +28,17 @@ export function BusinessShell({
 }) {
   const [open, setOpen] = useState(false);
   const close = useCallback(() => setOpen(false), []);
+  const [realTenantName, setRealTenantName] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (tenantSlug && tenantSlug !== "dashboard") {
+      fetchTenant(tenantSlug).then((t) => {
+        if (t) setRealTenantName(t.name);
+      });
+    }
+  }, [tenantSlug]);
+
+  const displayName = realTenantName ?? tenantName;
 
   return (
     <div className="flex h-screen overflow-hidden bg-slate-50">
@@ -84,7 +96,7 @@ export function BusinessShell({
             >
               <Menu className="h-5 w-5" />
             </button>
-            <span className="truncate text-sm font-semibold text-ink">{tenantName}</span>
+            <span className="truncate text-sm font-semibold text-ink">{displayName}</span>
           </div>
           {children}
         </main>
