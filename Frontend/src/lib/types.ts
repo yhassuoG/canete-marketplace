@@ -161,7 +161,8 @@ export type OrderStatus =
   | "on_the_way"
   | "ready_for_pickup"
   | "delivered"
-  | "cancelled";
+  | "cancelled"
+  | "payment_rejected";
 
 export type DeliveryType = "delivery" | "pickup";
 
