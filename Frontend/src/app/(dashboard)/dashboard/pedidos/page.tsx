@@ -50,6 +50,22 @@ const STATUS_FLOW: Record<string, { label: string; color: string; icon: typeof C
 
 const STATUS_ORDER = ["pending", "confirmed", "preparing", "on_the_way", "ready_for_pickup", "delivered", "cancelled", "payment_rejected"];
 
+// Progress stepper flows (shared with delivery page)
+const STEPPER_DELIVERY: { status: string; icon: typeof Clock; label: string }[] = [
+  { status: "pending", icon: Package, label: "Recibido" },
+  { status: "confirmed", icon: CheckCircle2, label: "Confirmado" },
+  { status: "preparing", icon: ChefHat, label: "Preparando" },
+  { status: "on_the_way", icon: Truck, label: "En camino" },
+  { status: "delivered", icon: CheckCircle2, label: "Entregado" },
+];
+const STEPPER_PICKUP: { status: string; icon: typeof Clock; label: string }[] = [
+  { status: "pending", icon: Package, label: "Recibido" },
+  { status: "confirmed", icon: CheckCircle2, label: "Confirmado" },
+  { status: "preparing", icon: ChefHat, label: "Preparando" },
+  { status: "ready_for_pickup", icon: CheckCircle2, label: "Listo p/ recoger" },
+  { status: "delivered", icon: CheckCircle2, label: "Entregado" },
+];
+
 const PAYMENT_LABELS: Record<string, string> = {
   cash: "Efectivo",
   efectivo: "Efectivo",
@@ -488,6 +504,36 @@ export default function DashboardPedidosPage() {
                             </div>
                           </div>
                         </div>
+
+                        {/* Progress stepper */}
+                        {(() => {
+                          const flow = order.deliveryType === "pickup" ? STEPPER_PICKUP : STEPPER_DELIVERY;
+                          const stepIdx = flow.findIndex(s => s.status === order.status);
+                          if (stepIdx < 0) return null;
+                          return (
+                            <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                              <div className="flex items-center gap-1">
+                                {flow.map((step, i) => {
+                                  const done = i <= stepIdx;
+                                  const StepIcon = step.icon;
+                                  return (
+                                    <div key={step.status} className="flex flex-1 items-center">
+                                      <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
+                                        <div className={`flex h-8 w-8 items-center justify-center rounded-full transition-colors ${done ? "bg-[#0c4a6e] text-white" : "bg-slate-100 text-slate-400"}`}>
+                                          <StepIcon className="h-4 w-4"/>
+                                        </div>
+                                        <span className={`text-[10px] font-medium ${done ? "text-[#0c4a6e]" : "text-slate-400"}`}>{step.label}</span>
+                                      </div>
+                                      {i < flow.length - 1 && (
+                                        <div className={`flex-1 h-0.5 mx-1 rounded-full ${i < stepIdx ? "bg-[#0c4a6e]" : "bg-slate-100"}`}/>
+                                      )}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          );
+                        })()}
 
                         {/* Payment verification (Yape/Plin) */}
                         {order.paymentMethod && ["yape", "plin"].includes(order.paymentMethod.toLowerCase()) && (
