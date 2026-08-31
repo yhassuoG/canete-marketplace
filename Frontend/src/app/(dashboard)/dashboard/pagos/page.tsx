@@ -84,6 +84,7 @@ export default function PagosPage() {
   }
 
   return (
+    <div className="min-h-screen bg-slate-50 p-4 sm:p-6 lg:p-8">
     <div className="max-w-3xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-center gap-3">
@@ -240,6 +241,7 @@ export default function PagosPage() {
           )}
         </div>
       </motion.div>
+    </div>
     </div>
   );
 }

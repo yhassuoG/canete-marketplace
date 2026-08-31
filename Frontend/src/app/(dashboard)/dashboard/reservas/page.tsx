@@ -78,11 +78,11 @@ export default function ReservasPage() {
   return (
     <div className="min-h-screen bg-slate-50">
       {/* Header */}
-      <header className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-white/80 px-8 py-4 backdrop-blur">
+      <header className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-slate-200 bg-white/80 px-4 sm:px-6 lg:px-8 py-4 backdrop-blur">
         <div><h1 className="text-lg font-semibold text-ink">Reservas</h1><p className="text-sm text-slate-400">Gestión de reservas del restaurante</p></div>
       </header>
 
-      <div className="p-6 space-y-6">
+      <div className="p-4 sm:p-6 space-y-6">
         {/* Stats */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {[
@@ -118,7 +118,7 @@ export default function ReservasPage() {
           </div>
         </div>
 
-        <div className="flex gap-6">
+        <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
           {/* List */}
           <motion.div layout className="flex-1 rounded-3xl border border-slate-100 bg-white shadow-soft overflow-hidden">
             <div className="divide-y divide-slate-50">
@@ -151,7 +151,7 @@ export default function ReservasPage() {
           <AnimatePresence>
             {selected && (
               <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}
-                className="w-72 flex-shrink-0 rounded-3xl border border-slate-100 bg-white p-6 shadow-soft h-fit sticky top-24">
+                className="w-full lg:w-72 flex-shrink-0 rounded-3xl border border-slate-100 bg-white p-4 sm:p-6 shadow-soft h-fit lg:sticky lg:top-24">
                 <div className="flex items-center justify-between mb-5">
                   <h3 className="font-semibold text-ink">Detalle</h3>
                   <button onClick={() => setSelected(null)} className="text-slate-400 hover:text-slate-600">

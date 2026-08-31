@@ -21,7 +21,7 @@ const IMPACT_LABEL = { high: "Alto impacto", medium: "Impacto medio", low: "Bajo
 export default function IAPage() {
   return (
     <div className="min-h-screen bg-slate-50">
-      <header className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-white/80 px-8 py-4 backdrop-blur">
+      <header className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-slate-200 bg-white/80 px-4 sm:px-6 lg:px-8 py-4 backdrop-blur">
         <div className="flex items-center gap-2">
           <Sparkles className="h-5 w-5 text-[#0c4a6e]"/>
           <div><h1 className="text-lg font-semibold text-ink">Recomendaciones IA</h1><p className="text-sm text-slate-400">Basado en los últimos 90 días de datos</p></div>
@@ -31,7 +31,7 @@ export default function IAPage() {
         </button>
       </header>
 
-      <div className="p-6 space-y-6">
+      <div className="p-4 sm:p-6 space-y-6">
         {/* Summary banner */}
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
           className="rounded-3xl bg-gradient-to-br from-[#0c4a6e] via-[#0369a1] to-[#0891b2] p-6 text-white">
@@ -39,7 +39,7 @@ export default function IAPage() {
             <Sparkles className="h-5 w-5 text-amber-300"/>
             <h2 className="font-semibold text-lg">Potencial de mejora este mes</h2>
           </div>
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {[
               { label: "Ingresos adicionales", value: "S/2,240+", icon: TrendingUp },
               { label: "Clientes recuperables", value: "15", icon: Target },

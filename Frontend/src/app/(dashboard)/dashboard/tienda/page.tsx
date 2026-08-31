@@ -78,7 +78,7 @@ export default function TiendaPage() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <header className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-white/80 px-8 py-4 backdrop-blur">
+      <header className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-slate-200 bg-white/80 px-4 sm:px-6 lg:px-8 py-4 backdrop-blur">
         <div className="flex items-center gap-2"><Store className="h-5 w-5 text-[#0c4a6e]"/>
           <div><h1 className="text-lg font-semibold text-ink">Mi tienda</h1><p className="text-sm text-slate-400">Personaliza la página pública de tu negocio</p></div>
         </div>
@@ -100,7 +100,7 @@ export default function TiendaPage() {
           <Loader2 className="h-8 w-8 animate-spin text-[#0c4a6e]" />
         </div>
       ) : (
-      <div className="p-6 grid gap-6 lg:grid-cols-2">
+      <div className="p-4 sm:p-6 grid gap-6 lg:grid-cols-2">
         {/* Info */}
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="rounded-3xl border border-slate-100 bg-white p-6 shadow-soft space-y-4">
           <h3 className="font-semibold text-ink">Información básica</h3>

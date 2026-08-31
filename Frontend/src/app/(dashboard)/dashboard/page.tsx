@@ -102,7 +102,7 @@ export default function BusinessDashboard() {
   return (
     <div className="min-h-screen bg-slate-50">
       {/* Top bar */}
-      <header className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-white/80 px-8 py-4 backdrop-blur">
+      <header className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-slate-200 bg-white/80 px-4 sm:px-6 lg:px-8 py-4 backdrop-blur">
         <div>
           <h1 className="text-lg font-semibold text-ink">{tenantName}</h1>
           <p className="flex items-center gap-1.5 text-sm text-slate-400">
@@ -199,7 +199,7 @@ export default function BusinessDashboard() {
         </div>
       </header>
 
-      <div className="p-8 space-y-8">
+      <div className="p-4 sm:p-6 lg:p-8 space-y-8">
         {/* KPI Cards */}
         <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
           <MetricCard

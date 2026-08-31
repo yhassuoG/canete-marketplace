@@ -119,6 +119,7 @@ export default function PagosPendientesPage() {
   };
 
   return (
+    <div className="min-h-screen bg-slate-50 p-4 sm:p-6 lg:p-8">
     <div className="max-w-5xl mx-auto space-y-6">
       <div className="flex items-center gap-3">
         <Clock className="h-7 w-7 text-amber-500" />
@@ -167,7 +168,7 @@ export default function PagosPendientesPage() {
           {proofs.map((proof) => (
             <div
               key={proof.id}
-              className="rounded-2xl border border-slate-200 p-4 flex items-center gap-4"
+              className="rounded-2xl border border-slate-200 p-4 flex flex-col sm:flex-row sm:items-center gap-4"
             >
               {/* Thumbnail */}
               <div className="flex-shrink-0">
@@ -205,7 +206,7 @@ export default function PagosPendientesPage() {
 
               {/* Actions */}
               {proof.status === "PENDING_VERIFICATION" && (
-                <div className="flex gap-2 flex-shrink-0">
+                <div className="flex gap-2 sm:flex-shrink-0 w-full sm:w-auto">
                   <button
                     onClick={() => handleConfirm(proof.id)}
                     disabled={acting === proof.id}
@@ -358,6 +359,7 @@ export default function PagosPendientesPage() {
           </motion.div>
         )}
       </AnimatePresence>
+    </div>
     </div>
   );
 }

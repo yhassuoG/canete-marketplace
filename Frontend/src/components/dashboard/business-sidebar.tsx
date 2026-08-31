@@ -67,6 +67,7 @@ interface BusinessSidebarProps {
   primaryColor?: string;
   gradient?: string;
   userName?: string;
+  onNavigate?: () => void;
 }
 
 export function BusinessSidebar({
@@ -75,6 +76,7 @@ export function BusinessSidebar({
   primaryColor = "#083d77",
   gradient = "linear-gradient(135deg, #083d77 0%, #1a5ba8 100%)",
   userName = "Usuario",
+  onNavigate,
 }: BusinessSidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
@@ -83,6 +85,7 @@ export function BusinessSidebar({
   function handleLogout() {
     clearAuthCookie();
     router.push("/login");
+    onNavigate?.();
   }
 
   return (
@@ -117,6 +120,7 @@ export function BusinessSidebar({
                   <li key={href}>
                     <Link
                       href={href}
+                      onClick={onNavigate}
                       className={clsx(
                         "relative flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-colors",
                         active
@@ -161,7 +165,7 @@ export function BusinessSidebar({
           <p className="truncate text-sm font-medium text-ink">{userName}</p>
           <p className="truncate text-xs text-slate-400">Propietario</p>
         </div>
-        <button onClick={handleLogout} className="text-slate-300 hover:text-slate-600 transition-colors" title="Cerrar sesión">
+        <button type="button" onClick={handleLogout} className="text-slate-300 hover:text-slate-600 transition-colors" title="Cerrar sesión">
           <LogOut className="h-4 w-4" />
         </button>
       </div>

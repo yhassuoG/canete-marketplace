@@ -138,11 +138,11 @@ export default function DeliveryPage() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <header className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-white/80 px-8 py-4 backdrop-blur">
+      <header className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-slate-200 bg-white/80 px-4 sm:px-6 lg:px-8 py-4 backdrop-blur">
         <div><h1 className="text-lg font-semibold text-ink">Delivery</h1><p className="text-sm text-slate-400">{active.length} pedidos activos en este momento</p></div>
       </header>
 
-      <div className="p-6 space-y-5">
+      <div className="p-4 sm:p-6 space-y-5">
         {/* Summary */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {[
@@ -162,7 +162,7 @@ export default function DeliveryPage() {
         </div>
 
         {/* Filter */}
-        <div className="flex gap-1 rounded-2xl bg-white border border-slate-100 p-1 shadow-soft w-fit">
+        <div className="flex gap-1 rounded-2xl bg-white border border-slate-100 p-1 shadow-soft w-fit max-w-full overflow-x-auto">
           {([
             { v: "all" as const, l: "Todos" }, { v: "pending" as OrderStatus, l: "Recibidos" },
             { v: "preparing" as OrderStatus, l: "Preparando" }, { v: "on_the_way" as OrderStatus, l: "En camino" },

@@ -62,7 +62,7 @@ export default function ClientesPage() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <header className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-white/80 px-8 py-4 backdrop-blur">
+      <header className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-slate-200 bg-white/80 px-4 sm:px-6 lg:px-8 py-4 backdrop-blur">
         <div>
           <h1 className="text-lg font-semibold text-ink">Clientes</h1>
           <p className="text-sm text-slate-400">
@@ -71,9 +71,9 @@ export default function ClientesPage() {
         </div>
       </header>
 
-      <div className="p-6 space-y-5">
+      <div className="p-4 sm:p-6 space-y-5">
         {/* Stats */}
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {[
             { label: "Total clientes",  value: loading ? "…" : customers.length },
             { label: "Nuevos este mes", value: loading ? "…" : newThisMonth },
@@ -88,7 +88,7 @@ export default function ClientesPage() {
         </div>
 
         {/* Search + sort */}
-        <div className="flex gap-3">
+        <div className="flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
             <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar cliente…"
@@ -162,7 +162,7 @@ export default function ClientesPage() {
                       <span className="text-xs font-medium text-amber-600 bg-amber-50 rounded-full px-2 py-0.5">{c.loyaltyPoints} pts</span>
                     )}
                   </div>
-                  <div className="grid grid-cols-3 gap-2 text-center mb-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-center mb-4">
                     <div className="rounded-2xl bg-slate-50 p-2"><p className="text-sm font-bold text-ink">{c.visits}</p><p className="text-[10px] text-slate-400">Pedidos</p></div>
                     <div className="rounded-2xl bg-slate-50 p-2"><p className="text-sm font-bold text-ink">S/{c.spent.toFixed(0)}</p><p className="text-[10px] text-slate-400">Gastado</p></div>
                     <div className="rounded-2xl bg-slate-50 p-2">

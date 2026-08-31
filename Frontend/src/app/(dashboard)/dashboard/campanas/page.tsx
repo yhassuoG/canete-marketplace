@@ -25,16 +25,16 @@ export default function CampanasPage() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <header className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-white/80 px-8 py-4 backdrop-blur">
+      <header className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-slate-200 bg-white/80 px-4 sm:px-6 lg:px-8 py-4 backdrop-blur">
         <div><h1 className="text-lg font-semibold text-ink">Campañas</h1><p className="text-sm text-slate-400">Email, push y SMS marketing</p></div>
         <button onClick={() => setShowNew(true)} className="flex items-center gap-2 rounded-xl bg-[#0c4a6e] px-4 py-2.5 text-sm font-semibold text-white">
           <Plus className="h-4 w-4"/> Nueva campaña
         </button>
       </header>
 
-      <div className="p-6 space-y-5">
+      <div className="p-4 sm:p-6 space-y-5">
         {/* Stats */}
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {[
             { label: "Campañas activas", value: CAMPAIGNS.filter(c => c.status === "active").length },
             { label: "Emails enviados", value: CAMPAIGNS.reduce((s, c) => s + c.audience, 0) },
@@ -71,7 +71,7 @@ export default function CampanasPage() {
                     <St.icon className="h-3 w-3"/>{St.label}
                   </span>
                 </div>
-                <div className="grid grid-cols-4 gap-3 text-center">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
                   {[
                     { label: "Audiencia", value: c.audience },
                     { label: "Aperturas", value: c.opened },

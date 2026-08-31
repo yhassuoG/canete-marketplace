@@ -44,11 +44,11 @@ export default function DashboardAnalyticsPage() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <header className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-white/80 px-8 py-4 backdrop-blur">
+      <header className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-slate-200 bg-white/80 px-4 sm:px-6 lg:px-8 py-4 backdrop-blur">
         <div><h1 className="text-lg font-semibold text-ink">Analytics</h1><p className="text-sm text-slate-400">Rendimiento detallado del negocio</p></div>
       </header>
 
-      <div className="p-6 space-y-6">
+      <div className="p-4 sm:p-6 space-y-6">
         <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
           <MetricCard label="Ventas totales" value={biz?.totalSales ?? 0} growth={biz?.salesGrowth ?? 0} prefix="S/" icon={<DollarSign className="h-5 w-5 text-emerald-600"/>} iconBg="bg-emerald-50" delay={0}/>
           <MetricCard label="Clientes únicos" value={biz?.totalCustomers ?? 0} growth={biz?.customerGrowth ?? 0} icon={<Users className="h-5 w-5 text-blue-600"/>} iconBg="bg-blue-50" delay={0.07}/>
@@ -115,7 +115,7 @@ export default function DashboardAnalyticsPage() {
               </BarChart>
             </ResponsiveContainer>
           </ClientOnly>
-          <div className="mt-4 flex gap-6 text-sm">
+          <div className="mt-4 flex flex-wrap gap-4 sm:gap-6 text-sm">
             <div className="flex items-center gap-2 text-slate-500"><div className="h-3 w-3 rounded bg-[#0369a1]"/> Hora más concurrida: <strong className="text-ink">{peakMax ? `${peakMax.hour} (${peakMax.pax} pedidos)` : "—"}</strong></div>
             <div className="flex items-center gap-2 text-slate-500"><TrendingUp className="h-4 w-4 text-emerald-500"/> Basado en historial de pedidos</div>
           </div>

@@ -32,14 +32,14 @@ export default function CuponesPage() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <header className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-white/80 px-8 py-4 backdrop-blur">
+      <header className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-slate-200 bg-white/80 px-4 sm:px-6 lg:px-8 py-4 backdrop-blur">
         <div><h1 className="text-lg font-semibold text-ink">Cupones</h1><p className="text-sm text-slate-400">{coupons.filter(c => c.isActive).length} cupones activos</p></div>
         <button onClick={() => setShowForm(v => !v)} className="flex items-center gap-2 rounded-xl bg-[#0c4a6e] px-4 py-2.5 text-sm font-semibold text-white">
           <Plus className="h-4 w-4"/> Crear cupón
         </button>
       </header>
 
-      <div className="p-6 space-y-5">
+      <div className="p-4 sm:p-6 space-y-5">
         {/* New coupon form */}
         {showForm && (
           <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}
