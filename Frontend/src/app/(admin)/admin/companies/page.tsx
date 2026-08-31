@@ -16,7 +16,7 @@ import {
   type TenantApiData,
 } from "@/lib/api";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { getTheme, TENANTS } from "@/lib/themes";
+import { getTheme } from "@/lib/themes";
 import type { Tenant, TenantPlan } from "@/lib/types";
 
 const PLAN_FILTER_OPTIONS: Array<TenantPlan | "all"> = ["all", "free", "starter", "premium", "enterprise"];
@@ -70,7 +70,7 @@ function mapApiTenant(tenant: TenantApiData): Tenant {
 export default function AdminCompaniesPage() {
   const [search, setSearch] = useState("");
   const [planFilter, setPlanFilter] = useState<TenantPlan | "all">("all");
-  const [tenants, setTenants] = useState<Tenant[]>(TENANTS);
+  const [tenants, setTenants] = useState<Tenant[]>([]);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [form, setForm] = useState(INITIAL_FORM);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -90,9 +90,10 @@ export default function AdminCompaniesPage() {
 
     async function loadTenants() {
       const apiTenants = await fetchTenants();
-      if (!active || apiTenants.length === 0) {
+      if (!active) {
         return;
       }
+      setTenants(apiTenants);
       setTenants(apiTenants.map(mapApiTenant));
       // Load banner/logo URLs from API data
       const images: Record<string, { bannerUrl: string | null; logoUrl: string | null }> = {};

@@ -4,7 +4,7 @@ import { MapPin, Star, Users } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
-import { Business, featuredBusinesses } from "@/lib/data";
+import { Business } from "@/lib/data";
 import { fetchFeaturedTenants, type TenantApiData } from "@/lib/api";
 
 const tierBorder: Record<Business["adTier"], string> = {
@@ -116,13 +116,13 @@ function BusinessCard({ business }: Readonly<{ business: Business }>) {
 }
 
 export function BusinessSpotlight() {
-  const [businesses, setBusinesses] = useState<Business[]>(featuredBusinesses);
+  const [businesses, setBusinesses] = useState<Business[]>([]);
 
   useEffect(() => {
     let active = true;
     async function load() {
       const featured = await fetchFeaturedTenants();
-      if (!active || featured.length === 0) return;
+      if (!active) return;
       setBusinesses(featured.map(tenantToBusiness));
     }
     void load();

@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-import { heroSlides, type Business } from "@/lib/data";
+import { type Business } from "@/lib/data";
 import { fetchFeaturedTenants, type TenantApiData } from "@/lib/api";
 import { useMarketplaceStore } from "@/lib/store";
 
@@ -46,14 +46,14 @@ export function Hero() {
   const setMode = useMarketplaceStore((state) => state.setMode);
   const [slide, setSlide] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
-  const [slides, setSlides] = useState<Business[]>(heroSlides);
+  const [slides, setSlides] = useState<Business[]>([]);
   const router = useRouter();
 
   useEffect(() => {
     let active = true;
     async function loadFeatured() {
       const featured = await fetchFeaturedTenants();
-      if (!active || featured.length === 0) return;
+      if (!active) return;
       setSlides(featured.map(tenantToSlide));
     }
     void loadFeatured();
@@ -74,7 +74,17 @@ export function Hero() {
     router.push(q ? `/marketplace?q=${encodeURIComponent(q)}` : "/marketplace");
   };
 
-  const current = slides[slide] ?? heroSlides[0];
+  const current = slides[slide];
+
+  if (!current) {
+    return (
+      <section className="relative overflow-hidden rounded-[2.5rem] border border-brand-100 bg-hero-nature shadow-soft">
+        <div className="relative z-10 flex min-h-[420px] items-center justify-center px-6 py-12">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-brand-200 border-t-brand-600" />
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="relative overflow-hidden rounded-[2.5rem] border border-brand-100 bg-hero-nature shadow-soft">
