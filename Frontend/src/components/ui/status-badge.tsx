@@ -30,6 +30,7 @@ const ORDER_STYLES: Record<OrderStatus, string> = {
   ready_for_pickup: "bg-teal-50 text-teal-700",
   delivered: "bg-emerald-50 text-emerald-700",
   cancelled: "bg-red-50 text-red-600",
+  payment_rejected: "bg-red-50 text-red-600",
 };
 
 const LABELS: Record<string, string> = {
@@ -48,6 +49,7 @@ const LABELS: Record<string, string> = {
   on_the_way: "En camino",
   ready_for_pickup: "Listo p/ recoger",
   delivered: "Entregado",
+  payment_rejected: "Pago rechazado",
 };
 
 interface StatusBadgeProps {
