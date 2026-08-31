@@ -41,6 +41,7 @@ import {
   type Product,
 } from "@/lib/api";
 import { getAuthUser } from "@/lib/auth";
+import { isTenantNow } from "@/lib/themes";
 
 // ── Page ───────────────────────────────────────────────────────────────────────
 
@@ -114,10 +115,16 @@ export default function BusinessDashboard() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <div className="hidden md:flex items-center gap-1.5 rounded-xl bg-emerald-50 px-3 py-1.5 text-sm font-medium text-emerald-700">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            Abierto ahora
-          </div>
+          {(() => {
+            const status = isTenantNow(tenant?.openingHours);
+            if (status === null) return null;
+            return (
+              <div className={`hidden md:flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-sm font-medium ${status.open ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"}`}>
+                <span className={`h-1.5 w-1.5 rounded-full animate-pulse ${status.open ? "bg-emerald-500" : "bg-red-500"}`} />
+                {status.open ? "Abierto ahora" : "Cerrado ahora"}
+              </div>
+            );
+          })()}
           <div ref={bellRef} className="relative">
             <button
               onClick={() => {

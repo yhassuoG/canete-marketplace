@@ -29,6 +29,7 @@ import {
   Upload,
 } from "lucide-react";
 import type { Tenant, Product } from "@/lib/types";
+import { isTenantNow } from "@/lib/themes";
 import { TenantSubscribeButton } from "@/components/tenant/tenant-subscribe-button";
 import { createOrder, createPaymentPreference, fetchProducts as fetchProductsApi, Product as ApiProduct, uploadPaymentReceipt } from "@/lib/api";
 import { getCustomerSession } from "@/lib/customer-session";
@@ -827,12 +828,16 @@ export function TenantStorefront({ tenant }: TenantStorefrontProps) {
               >
                 {tenant.category}
               </span>
-              {tenant.status === "active" && (
-                <span className="flex items-center gap-1.5 rounded-full bg-emerald-500/20 px-3 py-1 text-xs font-semibold text-emerald-300">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                  Abierto ahora
-                </span>
-              )}
+              {tenant.status === "active" && (() => {
+                const status = isTenantNow(tenant.openingHours);
+                if (status === null) return null; // sin horarios, no mostrar
+                return (
+                  <span className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${status.open ? "bg-emerald-500/20 text-emerald-300" : "bg-red-500/20 text-red-300"}`}>
+                    <span className={`h-1.5 w-1.5 rounded-full animate-pulse ${status.open ? "bg-emerald-400" : "bg-red-400"}`} />
+                    {status.open ? "Abierto ahora" : "Cerrado ahora"}
+                  </span>
+                );
+              })()}
             </div>
 
             <div className="flex items-center gap-4">

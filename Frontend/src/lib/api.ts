@@ -33,6 +33,7 @@ export interface TenantApiData {
   lat: number | null;
   lng: number | null;
   address: string | null;
+  openingHours: string | null;
   // Configuración delivery / pickup
   allowsDelivery: boolean | null;
   allowsPickup: boolean | null;
@@ -62,6 +63,7 @@ export interface UpdateTenantConfigPayload {
   description?: string;
   phone?: string;
   address?: string;
+  openingHours?: string;
   lat?: string;
   lng?: string;
   primaryColor?: string;

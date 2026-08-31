@@ -1,6 +1,36 @@
 import type { TenantApiData } from "./api";
 import type { Tenant, TenantTheme } from "./types";
 
+// ─── Opening hours helper ────────────────────────────────────────────────────
+
+const DAY_KEYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"] as const;
+
+/**
+ * Determina si el tenant está abierto AHORA según su openingHours (JSONB).
+ * Formato esperado: {"mon":{"open":"11:00","close":"22:00"},"tue":null,...}
+ * Retorna `null` si no hay horarios definidos (no se puede determinar).
+ */
+export function isTenantNow(openingHours?: string | null): { open: boolean } | null {
+  if (!openingHours) return null;
+  let obj: Record<string, { open: string; close: string } | null>;
+  try {
+    obj = JSON.parse(openingHours);
+  } catch {
+    return null;
+  }
+  const now = new Date();
+  const dayKey = DAY_KEYS[now.getDay()]; // 0=Domingo
+  const entry = obj[dayKey];
+  if (!entry) return { open: false }; // Cerrado ese día
+
+  const cur = now.getHours() * 60 + now.getMinutes();
+  const [oh, om] = entry.open.split(":").map(Number);
+  const [ch, cm] = entry.close.split(":").map(Number);
+  const openMin = oh * 60 + om;
+  const closeMin = ch * 60 + cm;
+  return { open: cur >= openMin && cur < closeMin };
+}
+
 // ─── Theme presets ────────────────────────────────────────────────────────────
 
 export const THEMES: Record<string, TenantTheme> = {
@@ -259,6 +289,7 @@ export function buildTenantFromApi(apiTenant: TenantApiData): Tenant {
     lat: apiTenant.lat,
     lng: apiTenant.lng,
     address: apiTenant.address,
+    openingHours: apiTenant.openingHours,
     allowsDelivery: apiTenant.allowsDelivery,
     allowsPickup: apiTenant.allowsPickup,
     deliveryFee: apiTenant.deliveryFee,

@@ -54,6 +54,7 @@ export interface Tenant {
   lat?: number | null;
   lng?: number | null;
   address?: string | null;
+  openingHours?: string | null;
   // Delivery / pickup configuration
   allowsDelivery?: boolean | null;
   allowsPickup?: boolean | null;

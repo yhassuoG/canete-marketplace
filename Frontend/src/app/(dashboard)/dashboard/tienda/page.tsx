@@ -16,6 +16,38 @@ const DEFAULT_HOURS = [
   { day: "Domingo", open: "10:00", close: "22:00", closed: false },
 ];
 
+const DAY_KEYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"] as const;
+
+/** Convierte el JSONB de la API → array de 7 días para la UI */
+function parseOpeningHours(json: string | null): typeof DEFAULT_HOURS {
+  if (!json) return DEFAULT_HOURS;
+  try {
+    const obj = JSON.parse(json);
+    return DEFAULT_HOURS.map((d, i) => {
+      const key = DAY_KEYS[i];
+      const entry = obj[key];
+      if (!entry) return { ...d, closed: true };
+      return {
+        day: d.day,
+        open: entry.open ?? d.open,
+        close: entry.close ?? d.close,
+        closed: false,
+      };
+    });
+  } catch {
+    return DEFAULT_HOURS;
+  }
+}
+
+/** Convierte el array de 7 días de la UI → JSONB string para la API */
+function serializeOpeningHours(hours: typeof DEFAULT_HOURS): string {
+  const obj: Record<string, { open: string; close: string } | null> = {};
+  hours.forEach((h, i) => {
+    obj[DAY_KEYS[i]] = h.closed ? null : { open: h.open, close: h.close };
+  });
+  return JSON.stringify(obj);
+}
+
 export default function TiendaPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -50,6 +82,7 @@ export default function TiendaPage() {
           address: t.address ?? "",
           category: t.category ?? "",
         });
+        setHours(parseOpeningHours(t.openingHours));
       }
       setLoading(false);
     });
@@ -65,6 +98,7 @@ export default function TiendaPage() {
       description: form.description,
       phone: form.phone,
       address: form.address,
+      openingHours: serializeOpeningHours(hours),
     });
     setSaving(false);
     if (updated) {
