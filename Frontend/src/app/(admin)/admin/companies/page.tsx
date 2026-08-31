@@ -93,7 +93,6 @@ export default function AdminCompaniesPage() {
       if (!active) {
         return;
       }
-      setTenants(apiTenants);
       setTenants(apiTenants.map(mapApiTenant));
       // Load banner/logo URLs from API data
       const images: Record<string, { bannerUrl: string | null; logoUrl: string | null }> = {};
