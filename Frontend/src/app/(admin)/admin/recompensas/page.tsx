@@ -130,8 +130,8 @@ export default function AdminRewardsPage() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <header className="sticky top-0 z-10 border-b border-slate-200 bg-white/80 px-8 py-4 backdrop-blur">
-        <div className="flex items-center justify-between">
+      <header className="sticky top-0 z-10 border-b border-slate-200 bg-white/80 px-4 sm:px-6 lg:px-8 py-4 backdrop-blur">
+        <div className="flex items-center justify-between flex-wrap gap-3">
           <div>
             <h1 className="text-lg font-semibold text-ink">Recompensas</h1>
             <p className="text-sm text-slate-400">{rewards.length} recompensas registradas</p>
@@ -147,7 +147,7 @@ export default function AdminRewardsPage() {
         </div>
       </header>
 
-      <div className="p-8">
+      <div className="p-4 sm:p-6 lg:p-8">
         <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
           {rewards.map((r, i) => (
             <motion.div

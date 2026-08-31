@@ -11,7 +11,7 @@ const THREATS = [
 
 export default function AdminSecurityPage() {
   return (
-    <div className="min-h-screen bg-slate-50 p-8 space-y-8">
+    <div className="min-h-screen bg-slate-50 p-4 sm:p-6 lg:p-8 space-y-8">
       <div>
         <h1 className="text-2xl font-bold text-ink">Seguridad</h1>
         <p className="text-sm text-slate-400 mt-1">Estado de seguridad y amenazas detectadas</p>
@@ -28,7 +28,7 @@ export default function AdminSecurityPage() {
           </div>
           <Shield className="h-24 w-24 text-white/20"/>
         </div>
-        <div className="mt-6 grid grid-cols-3 gap-4">
+        <div className="mt-6 grid grid-cols-2 sm:grid-cols-3 gap-4">
           {[
             { label: "SSL/TLS", status: "ok" }, { label: "2FA Admin", status: "ok" },
             { label: "Backups", status: "warn" }, { label: "Rate Limiting", status: "ok" },
@@ -52,6 +52,7 @@ export default function AdminSecurityPage() {
             <Globe className="h-4 w-4 text-red-500"/>
             <h3 className="font-semibold text-ink">IPs sospechosas bloqueadas</h3>
           </div>
+          <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead><tr className="border-b border-slate-50">
               <th className="px-5 py-3 text-left text-xs font-medium text-slate-400">IP</th>
@@ -74,6 +75,7 @@ export default function AdminSecurityPage() {
               ))}
             </tbody>
           </table>
+          </div>
         </motion.div>
 
         {/* API Keys */}

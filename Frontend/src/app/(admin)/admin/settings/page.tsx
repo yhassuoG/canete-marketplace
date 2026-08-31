@@ -66,8 +66,8 @@ export default function AdminSettingsPage() {
   );
 
   return (
-    <div className="min-h-screen bg-slate-50 p-8 space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="min-h-screen bg-slate-50 p-4 sm:p-6 lg:p-8 space-y-6">
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <div><h1 className="text-2xl font-bold text-ink">Configuración</h1><p className="text-sm text-slate-400 mt-1">Ajustes globales de la plataforma</p></div>
         <button onClick={handleSave}
           className={`flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold text-white transition-colors ${saved ? "bg-emerald-500" : "bg-[#083d77]"}`}>
@@ -112,7 +112,7 @@ export default function AdminSettingsPage() {
           <Field label="Nombre de la plataforma" name="platformName"/>
           <Field label="Dominio principal" name="domain"/>
           <Field label="Email de soporte" name="supportEmail" type="email"/>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-slate-600 mb-1.5">Moneda</label>
               <select value={form.currency} onChange={e => setForm(prev => ({ ...prev, currency: e.target.value }))}
@@ -128,7 +128,7 @@ export default function AdminSettingsPage() {
               </select>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field label="Comisión (%)" name="commissionRate" type="number"/>
             <Field label="Días de prueba gratis" name="trialDays" type="number"/>
           </div>

@@ -63,13 +63,20 @@ const NAV = [
   },
 ];
 
-export function AdminSidebar({ userName = "Admin" }: { userName?: string }) {
+export function AdminSidebar({
+  userName = "Admin",
+  onNavigate,
+}: {
+  userName?: string;
+  onNavigate?: () => void;
+}) {
   const pathname = usePathname();
   const router = useRouter();
 
   function handleLogout() {
     clearAuthCookie();
     router.push("/login");
+    onNavigate?.();
   }
 
   return (
@@ -98,6 +105,7 @@ export function AdminSidebar({ userName = "Admin" }: { userName?: string }) {
                   <li key={href}>
                     <Link
                       href={href}
+                      onClick={onNavigate}
                       className={clsx(
                         "relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
                         active

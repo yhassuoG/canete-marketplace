@@ -187,8 +187,8 @@ export default function AdminUsersPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 p-8 space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="min-h-screen bg-slate-50 p-4 sm:p-6 lg:p-8 space-y-6">
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-2xl font-bold text-ink">Usuarios</h1>
           <p className="text-sm text-slate-400 mt-1">Administradores y clientes de la plataforma</p>
@@ -214,6 +214,7 @@ export default function AdminUsersPage() {
       {tab === "admins" && (
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
           className="rounded-3xl border border-slate-100 bg-white shadow-soft overflow-hidden">
+          <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead><tr className="border-b border-slate-50">
               <th className="px-6 py-4 text-left text-xs font-medium text-slate-400">Usuario</th>
@@ -259,6 +260,7 @@ export default function AdminUsersPage() {
               })}
             </tbody>
           </table>
+          </div>
         </motion.div>
       )}
 
@@ -270,6 +272,7 @@ export default function AdminUsersPage() {
               placeholder="Buscar clientes..." className="w-full rounded-2xl border border-slate-200 bg-white py-3 pl-11 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#083d77]/20 shadow-soft"/>
           </div>
           <div className="rounded-3xl border border-slate-100 bg-white shadow-soft overflow-hidden">
+            <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead><tr className="border-b border-slate-50">
                 <th className="px-6 py-4 text-left text-xs font-medium text-slate-400">Cliente</th>
@@ -297,6 +300,7 @@ export default function AdminUsersPage() {
                 ))}
               </tbody>
             </table>
+            </div>
           </div>
         </motion.div>
       )}

@@ -38,7 +38,7 @@ export function MetricCard({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay, ease: [0.22, 1, 0.36, 1] }}
       className={clsx(
-        "rounded-3xl p-6",
+        "rounded-3xl p-4 sm:p-6",
         dark
           ? "bg-white/5 border border-white/10 text-white"
           : "bg-white border border-slate-100 shadow-soft"

@@ -71,13 +71,13 @@ export default function AdminDashboard() {
   return (
     <div className="min-h-screen bg-slate-50">
       {/* Top bar */}
-      <header className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-white/80 px-8 py-4 backdrop-blur">
-        <div>
+      <header className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-slate-200 bg-white/80 px-4 sm:px-6 lg:px-8 py-4 backdrop-blur">
+        <div className="min-w-0">
           <h1 className="text-lg font-semibold text-ink">Dashboard Global</h1>
           <p className="text-sm text-slate-400">Vista general de la plataforma</p>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-400">
+        <div className="flex items-center gap-3 flex-shrink-0">
+          <div className="hidden sm:flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-400">
             <Search className="h-4 w-4" />
             <span>Buscar...</span>
           </div>
@@ -88,7 +88,7 @@ export default function AdminDashboard() {
         </div>
       </header>
 
-      <div className="p-8 space-y-8">
+      <div className="p-4 sm:p-6 lg:p-8 space-y-8">
         {/* KPI Cards */}
         <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
           <MetricCard

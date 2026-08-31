@@ -108,8 +108,8 @@ export default function AdminPaymentsPage() {
     .reduce((s, p) => s + p.fee, 0);
 
   return (
-    <div className="min-h-screen bg-slate-50 p-8 space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="min-h-screen bg-slate-50 p-4 sm:p-6 lg:p-8 space-y-6">
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <div><h1 className="text-2xl font-bold text-ink">Pagos</h1><p className="text-sm text-slate-400 mt-1">Historial de transacciones de la plataforma</p></div>
         <button className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-soft">
           <Download className="h-4 w-4"/> Exportar CSV
@@ -154,6 +154,7 @@ export default function AdminPaymentsPage() {
       {/* Table */}
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
         className="rounded-3xl border border-slate-100 bg-white shadow-soft overflow-hidden">
+        <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead><tr className="border-b border-slate-50">
             <th className="px-6 py-4 text-left text-xs font-medium text-slate-400">ID</th>
@@ -180,6 +181,7 @@ export default function AdminPaymentsPage() {
             ))}
           </tbody>
         </table>
+        </div>
         {filtered.length === 0 && <div className="py-12 text-center text-sm text-slate-400">No se encontraron transacciones</div>}
       </motion.div>
     </div>

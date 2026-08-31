@@ -31,7 +31,7 @@ export default function AdminLogsPage() {
   const filtered = LOGS.filter(l => filter === "all" || l.severity === filter);
 
   return (
-    <div className="min-h-screen bg-slate-50 p-8 space-y-6">
+    <div className="min-h-screen bg-slate-50 p-4 sm:p-6 lg:p-8 space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-ink">Auditoría</h1>
         <p className="text-sm text-slate-400 mt-1">Registro completo de eventos del sistema</p>
@@ -54,6 +54,7 @@ export default function AdminLogsPage() {
 
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
         className="rounded-3xl border border-slate-100 bg-white shadow-soft overflow-hidden">
+        <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead><tr className="border-b border-slate-50">
             <th className="px-6 py-4 text-left text-xs font-medium text-slate-400">Severidad</th>
@@ -81,6 +82,7 @@ export default function AdminLogsPage() {
             })}
           </tbody>
         </table>
+        </div>
         {filtered.length === 0 && <div className="py-12 text-center text-sm text-slate-400">Sin eventos para este filtro</div>}
       </motion.div>
     </div>

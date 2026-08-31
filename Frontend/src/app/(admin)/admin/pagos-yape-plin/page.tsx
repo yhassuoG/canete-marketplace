@@ -78,6 +78,7 @@ export default function AdminPagosYapePlinPage() {
     });
 
   return (
+    <div className="min-h-screen bg-slate-50 p-4 sm:p-6 lg:p-8">
     <div className="max-w-5xl mx-auto space-y-6">
       <div className="flex items-center gap-3">
         <Smartphone className="h-7 w-7 text-emerald-500" />
@@ -109,7 +110,7 @@ export default function AdminPagosYapePlinPage() {
           {proofs.map((proof) => (
             <div
               key={proof.id}
-              className="rounded-2xl border border-slate-200 p-4 flex items-center gap-4"
+              className="rounded-2xl border border-slate-200 p-4 flex flex-wrap items-center gap-3 sm:gap-4"
             >
               <div className="flex-shrink-0">
                 <img
@@ -286,6 +287,7 @@ export default function AdminPagosYapePlinPage() {
           </motion.div>
         )}
       </AnimatePresence>
+    </div>
     </div>
   );
 }

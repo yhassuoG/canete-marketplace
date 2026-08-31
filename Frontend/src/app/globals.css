@@ -92,3 +92,12 @@ input::placeholder {
 .bottom-nav-safe {
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
+
+/* Admin mobile drawer slide-in animation */
+@keyframes admin-drawer-in {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+.animate-in {
+  animation: admin-drawer-in 0.22s ease-out;
+}

@@ -141,7 +141,7 @@ export default function AdminInvoicingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-admin-bg p-6">
+    <div className="min-h-screen bg-admin-bg p-4 sm:p-6">
       <div className="mx-auto max-w-7xl">
         {/* Header */}
         <div className="mb-6 flex items-center justify-between">

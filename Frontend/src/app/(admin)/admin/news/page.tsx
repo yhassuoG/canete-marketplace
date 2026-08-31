@@ -114,8 +114,8 @@ export default function AdminNewsPage() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <header className="sticky top-0 z-10 border-b border-slate-200 bg-white/80 px-8 py-4 backdrop-blur">
-        <div className="flex items-center justify-between">
+      <header className="sticky top-0 z-10 border-b border-slate-200 bg-white/80 px-4 sm:px-6 lg:px-8 py-4 backdrop-blur">
+        <div className="flex items-center justify-between flex-wrap gap-3">
           <div>
             <h1 className="text-lg font-semibold text-ink">Noticias</h1>
             <p className="text-sm text-slate-400">{news.length} noticias registradas</p>
@@ -127,7 +127,7 @@ export default function AdminNewsPage() {
         </div>
       </header>
 
-      <div className="p-8">
+      <div className="p-4 sm:p-6 lg:p-8">
         <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
           {news.map((n, i) => (
             <motion.div key={n.id} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }} className="rounded-3xl border border-slate-100 bg-white p-6 shadow-soft">

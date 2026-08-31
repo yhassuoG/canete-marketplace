@@ -1,5 +1,5 @@
 import { cookies } from "next/headers";
-import { AdminSidebar } from "@/components/admin/admin-sidebar";
+import { AdminShell } from "@/components/admin/admin-shell";
 import { AUTH_COOKIE, parseAuthCookie } from "@/lib/auth";
 
 export default async function AdminGroupLayout({
@@ -12,11 +12,8 @@ export default async function AdminGroupLayout({
   const user = raw ? parseAuthCookie(raw.value) : null;
 
   return (
-    <div className="flex h-screen overflow-hidden bg-slate-100">
-      <AdminSidebar userName={user?.name ?? "Admin"} />
-      <main className="flex-1 overflow-y-auto">
-        {children}
-      </main>
-    </div>
+    <AdminShell userName={user?.name ?? "Admin"}>
+      {children}
+    </AdminShell>
   );
 }

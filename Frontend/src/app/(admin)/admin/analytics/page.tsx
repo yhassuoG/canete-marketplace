@@ -43,7 +43,7 @@ export default function AdminAnalyticsPage() {
   const totalCat = categories.reduce((s, c) => s + c.value, 0) || 1;
 
   return (
-    <div className="min-h-screen bg-slate-50 p-8 space-y-8">
+    <div className="min-h-screen bg-slate-50 p-4 sm:p-6 lg:p-8 space-y-8">
       <div>
         <h1 className="text-2xl font-bold text-ink">Analytics Global</h1>
         <p className="text-sm text-slate-400 mt-1">Métricas consolidadas de toda la plataforma</p>
@@ -138,6 +138,7 @@ export default function AdminAnalyticsPage() {
         <div className="px-6 py-5 border-b border-slate-100">
           <h3 className="font-semibold text-ink">Top empresas por ingresos</h3>
         </div>
+        <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead><tr className="border-b border-slate-50">
             <th className="px-6 py-3 text-left text-xs font-medium text-slate-400">Empresa</th>
@@ -167,6 +168,7 @@ export default function AdminAnalyticsPage() {
             )}
           </tbody>
         </table>
+        </div>
       </motion.div>
     </div>
   );
