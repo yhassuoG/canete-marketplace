@@ -250,7 +250,7 @@ function MiCuentaContent() {
     : allTenantsList;
 
   const totalSpent = orders.reduce((sum, o) => sum + o.total, 0);
-  const loyaltyPoints = Math.floor(totalSpent * 10);
+  const loyaltyPoints = Math.round(totalSpent * 0.1 * 10) / 10;
 
   const handleLogout = () => {
     logout();
@@ -812,7 +812,7 @@ function MiCuentaContent() {
                   </span>
                 </div>
                 <p className="text-sm text-slate-500">
-                  Acumulas 10 puntos por cada S/1 de consumo. Canjea tus puntos por estas recompensas.
+                  Acumulas 0.1 puntos por cada S/1 de consumo. Canjea tus puntos por estas recompensas.
                 </p>
                 {rewards.length === 0 ? (
                   <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center">
