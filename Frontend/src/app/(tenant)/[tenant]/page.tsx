@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { buildTenantFromApi, getTenant } from "@/lib/themes";
+import { buildTenantFromApi } from "@/lib/themes";
 import { TenantStorefront } from "@/components/tenant/tenant-storefront";
 import { fetchTenant } from "@/lib/api";
 
@@ -9,18 +9,13 @@ interface Props {
 
 export default async function TenantPage({ params }: Props) {
   const { tenant: slug } = await params;
-  const staticTenant = getTenant(slug);
   const apiData = await fetchTenant(slug);
 
-  if (!staticTenant && !apiData) {
+  if (!apiData) {
     notFound();
   }
 
-  const tenant = apiData ? buildTenantFromApi(apiData) : staticTenant;
-
-  if (!tenant) {
-    notFound();
-  }
+  const tenant = buildTenantFromApi(apiData);
 
   return <TenantStorefront tenant={tenant} />;
 }

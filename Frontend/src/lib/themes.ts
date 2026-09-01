@@ -257,8 +257,7 @@ export function getTenant(slug: string): Tenant | undefined {
 }
 
 export function buildTenantFromApi(apiTenant: TenantApiData): Tenant {
-  const staticTenant = getTenant(apiTenant.slug);
-  const baseTheme = staticTenant?.theme ?? getTheme(apiTenant.slug);
+  const baseTheme = getTheme(apiTenant.slug);
 
   // Si el tenant tiene un banner_url en la DB, usarlo como heroImage (override del theme estático)
   const theme: TenantTheme = apiTenant.bannerUrl
@@ -269,23 +268,23 @@ export function buildTenantFromApi(apiTenant: TenantApiData): Tenant {
     id: apiTenant.id,
     slug: apiTenant.slug,
     name: apiTenant.name,
-    tagline: apiTenant.tagline ?? staticTenant?.tagline ?? "",
-    category: (apiTenant.category as Tenant["category"]) ?? staticTenant?.category ?? "other",
+    tagline: apiTenant.tagline ?? "",
+    category: (apiTenant.category as Tenant["category"]) ?? "other",
     location: apiTenant.location,
-    plan: (apiTenant.plan as Tenant["plan"]) ?? staticTenant?.plan ?? "premium",
-    status: (apiTenant.status as Tenant["status"]) ?? staticTenant?.status ?? "active",
+    plan: (apiTenant.plan as Tenant["plan"]) ?? "premium",
+    status: (apiTenant.status as Tenant["status"]) ?? "active",
     rating: apiTenant.rating,
     reviewCount: apiTenant.reviewCount,
     monthlyRevenue: apiTenant.monthlyRevenue,
     reservationsThisMonth: apiTenant.reservationsThisMonth,
     ordersThisMonth: apiTenant.ordersThisMonth,
     theme,
-    createdAt: staticTenant?.createdAt ?? new Date().toISOString(),
-    owner: staticTenant?.owner ?? "Pendiente",
-    phone: apiTenant.phone ?? staticTenant?.phone,
-    email: staticTenant?.email,
-    features: (apiTenant.features as Tenant["features"]) ?? staticTenant?.features ?? ["catalog", "reviews"],
-    description: apiTenant.description ?? staticTenant?.description ?? "",
+    createdAt: new Date().toISOString(),
+    owner: "Pendiente",
+    phone: apiTenant.phone,
+    email: undefined,
+    features: (apiTenant.features as Tenant["features"]) ?? ["catalog", "reviews"],
+    description: apiTenant.description ?? "",
     lat: apiTenant.lat,
     lng: apiTenant.lng,
     address: apiTenant.address,

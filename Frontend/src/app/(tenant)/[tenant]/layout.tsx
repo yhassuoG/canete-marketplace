@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { fetchTenant } from "@/lib/api";
-import { buildTenantFromApi, getTenant, getTheme, themeToVars } from "@/lib/themes";
+import { buildTenantFromApi, getTheme, themeToVars } from "@/lib/themes";
 import { BottomNav } from "@/components/ui/bottom-nav";
 import { TenantGoogleProvider } from "@/components/providers/tenant-google-provider";
 import type { Metadata } from "next";
@@ -12,12 +12,11 @@ interface Props {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { tenant: slug } = await params;
-  const tenant = getTenant(slug);
   const apiTenant = await fetchTenant(slug);
-  const resolvedTenant = apiTenant ? buildTenantFromApi(apiTenant) : tenant;
 
-  if (!resolvedTenant) return { title: "Negocio no encontrado" };
+  if (!apiTenant) return { title: "Negocio no encontrado" };
 
+  const resolvedTenant = buildTenantFromApi(apiTenant);
   return {
     title: `${resolvedTenant.name} · vallecanete`,
     description: resolvedTenant.description,
@@ -26,16 +25,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function TenantLayout({ children, params }: Props) {
   const { tenant: slug } = await params;
-  const tenant = getTenant(slug);
   const apiTenant = await fetchTenant(slug);
 
   // Unknown slugs that aren't system routes return 404
   const SYSTEM_SLUGS = new Set(["admin", "dashboard", "marketplace", "api", "favicon.ico"]);
-  if (!tenant && !apiTenant && !SYSTEM_SLUGS.has(slug)) {
+  if (!apiTenant && !SYSTEM_SLUGS.has(slug)) {
     notFound();
   }
 
-  const vars = themeToVars((tenant?.theme ?? getTheme(slug)));
+  const vars = themeToVars(getTheme(slug));
 
   return (
     <TenantGoogleProvider>
