@@ -23,6 +23,7 @@ import {
   Eye,
   Loader2,
   Smartphone,
+  Printer,
 } from "lucide-react";
 import {
   fetchOrdersByTenant,
@@ -92,6 +93,98 @@ function formatDate(iso: string) {
 
 function shortOrderId(id: string) {
   return id.substring(0, 8).toUpperCase();
+}
+
+// ── Print ticket with QR for delivery orders ────────────────────────────────
+function printTicket(order: OrderApiResponse, tenantName: string) {
+  const mapsUrl = order.deliveryLat && order.deliveryLng
+    ? `https://www.google.com/maps?q=${order.deliveryLat},${order.deliveryLng}`
+    : null;
+  // QR code image from api.qrserver.com (free, no key needed)
+  const qrUrl = mapsUrl
+    ? `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(mapsUrl)}`
+    : null;
+
+  const itemsHtml = order.items.map((item) => `
+    <tr>
+      <td style="padding:4px 0;">${item.quantity}x</td>
+      <td style="padding:4px 0;">${item.productName}</td>
+      <td style="padding:4px 0;text-align:right;">S/${Number(item.subtotal).toFixed(2)}</td>
+    </tr>
+  `).join("");
+
+  const deliveryInfo = order.deliveryType === "delivery"
+    ? `<p><strong>Dirección:</strong> ${order.customerAddress ?? "—"}</p>
+       ${mapsUrl ? `<p><strong>Maps:</strong> <a href="${mapsUrl}">${mapsUrl}</a></p>` : ""}`
+    : `<p><strong>Tipo:</strong> Recojo en local</p>`;
+
+  const html = `<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Ticket #${shortOrderId(order.id)}</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Courier New', monospace; width: 80mm; margin: 0 auto; padding: 8mm; color: #000; }
+  h1 { font-size: 18px; text-align: center; margin-bottom: 4px; }
+  h2 { font-size: 14px; text-align: center; margin-bottom: 8px; }
+  hr { border: none; border-top: 1px dashed #000; margin: 8px 0; }
+  p { font-size: 12px; line-height: 1.6; }
+  table { width: 100%; font-size: 12px; border-collapse: collapse; }
+  td { vertical-align: top; }
+  .total { font-size: 14px; font-weight: bold; }
+  .qr { text-align: center; margin: 8px 0; }
+  .qr img { width: 180px; height: 180px; }
+  .footer { text-align: center; font-size: 10px; margin-top: 8px; }
+  .badge { display: inline-block; border: 1px solid #000; padding: 2px 8px; font-size: 10px; border-radius: 4px; }
+</style>
+</head>
+<body>
+  <h1>${tenantName}</h1>
+  <h2>Ticket de Pedido</h2>
+  <hr>
+  <p><strong>Pedido:</strong> #${shortOrderId(order.id)}</p>
+  <p><strong>Fecha:</strong> ${formatDate(order.createdAt)}</p>
+  <p><strong>Cliente:</strong> ${order.customerName}</p>
+  ${order.customerPhone ? `<p><strong>Tel:</strong> ${order.customerPhone}</p>` : ""}
+  <p><strong>Pago:</strong> ${PAYMENT_LABELS[order.paymentMethod ?? ""] ?? order.paymentMethod ?? "—"}</p>
+  <hr>
+  ${deliveryInfo}
+  <hr>
+  <table>
+    <thead>
+      <tr style="border-bottom: 1px solid #000;">
+        <th style="padding:4px 0;text-align:left;">Cant</th>
+        <th style="padding:4px 0;text-align:left;">Producto</th>
+        <th style="padding:4px 0;text-align:right;">Precio</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${itemsHtml}
+    </tbody>
+  </table>
+  <hr>
+  <table>
+    <tr><td>Subtotal:</td><td style="text-align:right;">S/${Number(order.subtotal).toFixed(2)}</td></tr>
+    ${Number(order.deliveryFee) > 0 ? `<tr><td>Envío:</td><td style="text-align:right;">S/${Number(order.deliveryFee).toFixed(2)}</td></tr>` : ""}
+    <tr class="total"><td>TOTAL:</td><td style="text-align:right;">S/${Number(order.total).toFixed(2)}</td></tr>
+  </table>
+  ${order.notes ? `<hr><p><strong>Notas:</strong> ${order.notes}</p>` : ""}
+  ${qrUrl ? `<hr><div class="qr"><img src="${qrUrl}" alt="QR Maps"/><br><span class="badge">Escanear para ver ubicación</span></div>` : ""}
+  <hr>
+  <div class="footer">
+    <p>¡Gracias por su compra!</p>
+    <p>vallecanete.com</p>
+  </div>
+  <script>window.onload = function() { window.print(); }</script>
+</body>
+</html>`;
+
+  const w = window.open("", "_blank", "width=400,height=600");
+  if (w) {
+    w.document.write(html);
+    w.document.close();
+  }
 }
 
 export default function DashboardPedidosPage() {
@@ -460,6 +553,17 @@ export default function DashboardPedidosPage() {
                                   <MapPin className="h-3.5 w-3.5" /> {order.customerAddress}
                                 </p>
                               )}
+                              {order.deliveryLat && order.deliveryLng && (
+                                <a
+                                  href={`https://www.google.com/maps?q=${order.deliveryLat},${order.deliveryLng}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center gap-1.5 text-xs text-[#0c4a6e] hover:underline"
+                                >
+                                  <MapPin className="h-3.5 w-3.5" />
+                                  Ver ubicación en Google Maps
+                                </a>
+                              )}
                               {order.paymentMethod && (
                                 <p className="flex items-center gap-2 text-slate-500">
                                   <Banknote className="h-3.5 w-3.5" /> {PAYMENT_LABELS[order.paymentMethod] ?? order.paymentMethod}
@@ -714,6 +818,16 @@ export default function DashboardPedidosPage() {
                               <XCircle className="h-4 w-4" /> Pedido cancelado
                             </span>
                           )}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              printTicket(order, tenantName);
+                            }}
+                            className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors ml-auto"
+                          >
+                            <Printer className="h-4 w-4" />
+                            Imprimir ticket
+                          </button>
                         </div>
                       </div>
                     </motion.div>

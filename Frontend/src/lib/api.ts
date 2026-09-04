@@ -558,6 +558,8 @@ export interface CreateOrderPayload {
   customerName: string;
   customerPhone?: string;
   customerAddress?: string;
+  deliveryLat?: number;
+  deliveryLng?: number;
   deliveryType: "pickup" | "delivery";
   paymentMethod?: string;
   paymentReference?: string;
@@ -572,6 +574,8 @@ export interface OrderApiResponse {
   customerName: string;
   customerPhone: string | null;
   customerAddress: string | null;
+  deliveryLat: number | null;
+  deliveryLng: number | null;
   status: OrderStatus;
   deliveryType: DeliveryType;
   paymentMethod: string | null;
