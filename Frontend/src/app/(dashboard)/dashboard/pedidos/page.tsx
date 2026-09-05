@@ -95,6 +95,41 @@ function shortOrderId(id: string) {
   return id.substring(0, 8).toUpperCase();
 }
 
+// ── WhatsApp notification via wa.me link (100% free, no API needed) ──────────
+function normalizePhone(phone: string): string {
+  let digits = phone.replace(/\D/g, "");
+  // Perú: 9-digit number starting with 9 → add country code 51
+  if (digits.length === 9 && digits.startsWith("9")) digits = "51" + digits;
+  return digits;
+}
+
+function buildWhatsAppMessage(order: OrderApiResponse, newStatus: string, tenantName: string): string | null {
+  const id = shortOrderId(order.id);
+  const total = Number(order.total).toFixed(2);
+  switch (newStatus) {
+    case "confirmed":
+      return `✅ Tu pedido #${id} a ${tenantName} ha sido CONFIRMADO y está siendo preparado.\n\nTotal: S/${total}\n\n¡Gracias por tu compra!`;
+    case "cancelled":
+      return `❌ Lamentablemente tu pedido #${id} a ${tenantName} ha sido CANCELADO. Si tienes dudas, contáctanos.`;
+    case "on_the_way":
+      return `🚀 Tu pedido #${id} va en camino. ¡Prepárate para recibirlo!`;
+    case "ready_for_pickup":
+      return `✅ Tu pedido #${id} está listo para recoger. Te esperamos en ${tenantName}!`;
+    default:
+      return null;
+  }
+}
+
+function openWhatsAppNotification(order: OrderApiResponse, newStatus: string, tenantName: string) {
+  if (!order.customerPhone) return;
+  const phone = normalizePhone(order.customerPhone);
+  if (!phone) return;
+  const msg = buildWhatsAppMessage(order, newStatus, tenantName);
+  if (!msg) return;
+  const url = `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
+  window.open(url, "_blank");
+}
+
 // ── Print ticket with QR for delivery orders ────────────────────────────────
 function printTicket(order: OrderApiResponse, tenantName: string) {
   const mapsUrl = order.deliveryLat && order.deliveryLng
@@ -247,6 +282,8 @@ export default function DashboardPedidosPage() {
     const updated = await updateOrderStatus(orderId, next);
     if (updated) {
       setOrders((prev) => prev.map((o) => (o.id === orderId ? updated : o)));
+      // Auto-open WhatsApp with pre-filled message (free, no API)
+      openWhatsAppNotification(updated, next, tenantName);
     }
     setUpdatingId(null);
   }
@@ -257,6 +294,8 @@ export default function DashboardPedidosPage() {
     const updated = await updateOrderStatus(orderId, "cancelled");
     if (updated) {
       setOrders((prev) => prev.map((o) => (o.id === orderId ? updated : o)));
+      // Auto-open WhatsApp with cancellation message
+      openWhatsAppNotification(updated, "cancelled", tenantName);
     }
     setUpdatingId(null);
   }
