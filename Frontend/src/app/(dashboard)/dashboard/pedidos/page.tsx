@@ -114,8 +114,7 @@ function printTicket(order: OrderApiResponse, tenantName: string) {
   `).join("");
 
   const deliveryInfo = order.deliveryType === "delivery"
-    ? `<p><strong>Dirección:</strong> ${order.customerAddress ?? "—"}</p>
-       ${mapsUrl ? `<p><strong>Maps:</strong> <a href="${mapsUrl}">${mapsUrl}</a></p>` : ""}`
+    ? `<p><strong>Dirección:</strong> ${order.customerAddress ?? "—"}</p>`
     : `<p><strong>Tipo:</strong> Recojo en local</p>`;
 
   const html = `<!DOCTYPE html>
