@@ -1849,6 +1849,64 @@ export async function listInvoicesByOrder(orderId: string): Promise<Invoice[]> {
   }
 }
 
+// ── Security Dashboard ───────────────────────────────────────────────────────
+
+export interface SecurityMeasure {
+  id: string;
+  label: string;
+  status: "ok" | "warn" | "fail";
+  detail: string;
+}
+
+export interface BlockedIpInfo {
+  ip: string;
+  category: string;
+  blockCount: number;
+  lastBlockedAt: string;
+  lastPath: string;
+}
+
+export interface RateLimitStats {
+  totalBlockedRequests: number;
+  currentlyTrackedIps: number;
+  blockedIpsCount: number;
+  limits: Record<string, number>;
+  windowSeconds: number;
+  topBlockedIps: BlockedIpInfo[];
+}
+
+export interface SecurityStatus {
+  measures: SecurityMeasure[];
+  score: number;
+  scoreMax: number;
+  okCount: number;
+  warnCount: number;
+  totalMeasures: number;
+  rateLimit: RateLimitStats;
+}
+
+/** Obtiene el estado completo de seguridad del sistema */
+export async function fetchSecurityStatus(): Promise<SecurityStatus | null> {
+  try {
+    const res = await fetch(`${API_BASE}/api/admin/security/status`, { cache: "no-store" });
+    if (!res.ok) return null;
+    return (await res.json()) as SecurityStatus;
+  } catch {
+    return null;
+  }
+}
+
+/** Desbloquea una IP bloqueada por rate limiting */
+export async function unblockIp(ip: string): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const res = await fetch(`${API_BASE}/api/admin/security/blocked-ip/${ip}`, { method: "DELETE" });
+    if (!res.ok) return { ok: false, error: `Error ${res.status}` };
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: String(e) };
+  }
+}
+
 /** URL para descargar PDF de una factura */
 export function getInvoicePdfUrl(invoiceId: string): string {
   return `${API_BASE}/api/v1/invoicing/${invoiceId}/pdf`;
