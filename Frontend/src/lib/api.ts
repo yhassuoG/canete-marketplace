@@ -143,6 +143,25 @@ export async function fetchTenants(options?: RequestInit): Promise<TenantApiData
   }
 }
 
+/**
+ * Lista TODOS los tenants (activos y suspendidos) para el panel superadmin.
+ * Usa el endpoint /api/tenants/all del backend. Sin caché para que el admin
+ * vea siempre el estado actual tras suspender/reactivar.
+ */
+export async function fetchAllTenants(options?: RequestInit): Promise<TenantApiData[]> {
+  try {
+    const res = await fetch(`${API_BASE}/api/tenants/all`, {
+      cache: "no-store",
+      ...options,
+    });
+    if (!res.ok) return [];
+    return (await res.json()) as TenantApiData[];
+  } catch (err) {
+    if (err instanceof Error && (err as Error & { digest?: string }).digest === "DYNAMIC_SERVER_USAGE") throw err;
+    return [];
+  }
+}
+
 export async function createTenant(
   payload: CreateTenantPayload
 ): Promise<{ data: TenantApiData | null; conflict: boolean; message?: string }> {

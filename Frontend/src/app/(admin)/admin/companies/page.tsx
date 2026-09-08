@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { Search, Filter, Plus, Building2, Star, X, Trash2, Power, Pencil, Sparkles, ImagePlus, Upload } from "lucide-react";
 import {
   createTenant,
-  fetchTenants,
+  fetchAllTenants,
   deleteTenant,
   setTenantStatus,
   changeTenantPlan,
@@ -70,6 +70,7 @@ function mapApiTenant(tenant: TenantApiData): Tenant {
 export default function AdminCompaniesPage() {
   const [search, setSearch] = useState("");
   const [planFilter, setPlanFilter] = useState<TenantPlan | "all">("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "suspended">("all");
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [form, setForm] = useState(INITIAL_FORM);
@@ -89,7 +90,7 @@ export default function AdminCompaniesPage() {
     let active = true;
 
     async function loadTenants() {
-      const apiTenants = await fetchTenants();
+      const apiTenants = await fetchAllTenants();
       if (!active) {
         return;
       }
@@ -114,7 +115,8 @@ export default function AdminCompaniesPage() {
       t.name.toLowerCase().includes(search.toLowerCase()) ||
       t.location.toLowerCase().includes(search.toLowerCase());
     const matchesPlan = planFilter === "all" || t.plan === planFilter;
-    return matchesSearch && matchesPlan;
+    const matchesStatus = statusFilter === "all" || t.status === statusFilter;
+    return matchesSearch && matchesPlan && matchesStatus;
   });
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -431,6 +433,19 @@ export default function AdminCompaniesPage() {
                   {p === "all" ? "Todos los planes" : p.charAt(0).toUpperCase() + p.slice(1)}
                 </option>
               ))}
+            </select>
+          </div>
+
+          <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2">
+            <Power className="h-4 w-4 text-slate-400" />
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value as "all" | "active" | "suspended")}
+              className="bg-transparent text-sm text-ink outline-none cursor-pointer"
+            >
+              <option value="all">Todos los estados</option>
+              <option value="active">Activos</option>
+              <option value="suspended">Suspendidos</option>
             </select>
           </div>
         </div>
