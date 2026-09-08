@@ -1896,6 +1896,72 @@ export async function fetchSecurityStatus(): Promise<SecurityStatus | null> {
   }
 }
 
+// ── Audit Logs ───────────────────────────────────────────────────────────────
+
+export interface AuditLogEntry {
+  id: number;
+  action: string;
+  severity: "info" | "warning" | "error";
+  actor: string;
+  actorType: string;
+  target: string;
+  ipAddress: string;
+  path: string;
+  method: string;
+  details: string;
+  createdAt: string;
+}
+
+export interface AuditLogPage {
+  entries: AuditLogEntry[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+}
+
+export interface AuditLogSummary {
+  total: number;
+  info: number;
+  warning: number;
+  error: number;
+  recent: AuditLogEntry[];
+}
+
+/** Obtiene logs de auditoría con paginación y filtros */
+export async function fetchAuditLogs(params: {
+  page?: number;
+  size?: number;
+  severity?: string;
+  action?: string;
+  actor?: string;
+}): Promise<AuditLogPage | null> {
+  try {
+    const query = new URLSearchParams();
+    if (params.page !== undefined) query.set("page", String(params.page));
+    if (params.size !== undefined) query.set("size", String(params.size));
+    if (params.severity) query.set("severity", params.severity);
+    if (params.action) query.set("action", params.action);
+    if (params.actor) query.set("actor", params.actor);
+    const res = await fetch(`${API_BASE}/api/admin/audit?${query}`, { cache: "no-store" });
+    if (!res.ok) return null;
+    return (await res.json()) as AuditLogPage;
+  } catch {
+    return null;
+  }
+}
+
+/** Obtiene un resumen de auditoría (contadores + recientes) */
+export async function fetchAuditSummary(): Promise<AuditLogSummary | null> {
+  try {
+    const res = await fetch(`${API_BASE}/api/admin/audit/summary`, { cache: "no-store" });
+    if (!res.ok) return null;
+    return (await res.json()) as AuditLogSummary;
+  } catch {
+    return null;
+  }
+}
+
 /** Desbloquea una IP bloqueada por rate limiting */
 export async function unblockIp(ip: string): Promise<{ ok: boolean; error?: string }> {
   try {
