@@ -92,7 +92,7 @@ export default function TiendaPage() {
     if (!tenant) return;
     setSaving(true);
     setError(null);
-    const updated = await updateTenantConfig(tenant.slug, {
+    const result = await updateTenantConfig(tenant.slug, {
       name: form.name,
       tagline: form.tagline,
       description: form.description,
@@ -101,12 +101,12 @@ export default function TiendaPage() {
       openingHours: serializeOpeningHours(hours),
     });
     setSaving(false);
-    if (updated) {
-      setTenant(updated);
+    if (result.data) {
+      setTenant(result.data);
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
     } else {
-      setError("No se pudo guardar. Intenta de nuevo.");
+      setError(result.error || "No se pudo guardar. Intenta de nuevo.");
     }
   };
 

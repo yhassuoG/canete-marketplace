@@ -78,7 +78,7 @@ export default function YapePlinConfigPage() {
     setSaved(false);
 
     try {
-      const data = await updateTenantConfig(slug, {
+      const result = await updateTenantConfig(slug, {
         yapeEnabled,
         yapePhone,
         yapeHolder,
@@ -87,8 +87,8 @@ export default function YapePlinConfigPage() {
         plinHolder,
         paymentInstructions: instructions,
       });
-      if (!data) {
-        setError("No se pudo guardar la configuración");
+      if (!result.data) {
+        setError(result.error || "No se pudo guardar la configuración");
       } else {
         setSaved(true);
         setTimeout(() => setSaved(false), 3000);

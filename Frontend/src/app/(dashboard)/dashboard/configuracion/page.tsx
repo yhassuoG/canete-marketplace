@@ -120,6 +120,7 @@ export default function ConfiguracionPage() {
     setBannerUrl(null);
   };
 
+
   // Subir logo (imagen de perfil circular) al backend
   const logoInputRef = useRef<HTMLInputElement>(null);
 
@@ -153,6 +154,7 @@ export default function ConfiguracionPage() {
     setLogoUrl(null);
   };
 
+
   // 2️⃣ Save: call API first, then persist to localStorage as cache
   const save = async () => {
     setSaving(true);
@@ -184,8 +186,12 @@ export default function ConfiguracionPage() {
     }
 
     setSaving(false);
+    if (result?.error) {
+      alert("No se pudo guardar: " + result.error);
+      return;
+    }
     setSaved(true);
-    if (!result) console.warn("API unavailable — changes saved only to localStorage");
+    if (!result?.data) console.warn("API unavailable — changes saved only to localStorage");
     setTimeout(() => setSaved(false), 2500);
   };
 

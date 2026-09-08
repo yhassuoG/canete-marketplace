@@ -202,17 +202,20 @@ export async function createTenant(
 export async function updateTenantConfig(
   slug: string,
   payload: UpdateTenantConfigPayload
-): Promise<TenantApiData | null> {
+): Promise<{ data: TenantApiData | null; error?: string }> {
   try {
     const res = await fetch(`${API_BASE}/api/tenants/${slug}/config`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
-    if (!res.ok) return null;
-    return (await res.json()) as TenantApiData;
-  } catch {
-    return null;
+    if (!res.ok) {
+      const data = await res.json().catch(() => null);
+      return { data: null, error: data?.message || data?.error || `Error ${res.status}` };
+    }
+    return { data: (await res.json()) as TenantApiData };
+  } catch (e) {
+    return { data: null, error: String(e) };
   }
 }
 
@@ -1364,7 +1367,7 @@ export async function createUser(payload: CreateUserPayload): Promise<{ ok: bool
     });
     if (!res.ok) {
       const data = await res.json().catch(() => null);
-      return { ok: false, error: data?.error || `Error ${res.status}` };
+      return { ok: false, error: data?.message || data?.error || `Error ${res.status}` };
     }
     return { ok: true };
   } catch (e) {
@@ -1381,7 +1384,7 @@ export async function updateUser(id: string, payload: UpdateUserPayload): Promis
     });
     if (!res.ok) {
       const data = await res.json().catch(() => null);
-      return { ok: false, error: data?.error || `Error ${res.status}` };
+      return { ok: false, error: data?.message || data?.error || `Error ${res.status}` };
     }
     return { ok: true };
   } catch (e) {
@@ -1839,7 +1842,7 @@ export async function issueInvoice(
       body: JSON.stringify({ orderId, type, customerDocType, customerDocNumber }),
     });
     const data = await res.json();
-    if (!res.ok) return { ok: false, error: data?.error || `Error ${res.status}` };
+    if (!res.ok) return { ok: false, error: data?.message || data?.error || `Error ${res.status}` };
     return { ok: true, invoice: data };
   } catch (e) {
     return { ok: false, error: String(e) };
