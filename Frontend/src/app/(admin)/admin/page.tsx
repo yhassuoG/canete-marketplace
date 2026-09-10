@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
   AreaChart,
@@ -40,6 +41,8 @@ import {
 // ── Page ───────────────────────────────────────────────────────────────────────
 
 export default function AdminDashboard() {
+  const router = useRouter();
+  const [searchQuery, setSearchQuery] = useState("");
   const [metrics, setMetrics] = useState<GlobalAnalytics | null>(null);
   const [revenue, setRevenue] = useState<RevenueSeriesEntry[]>([]);
   const [categories, setCategories] = useState<CategoryBreakdownEntry[]>([]);
@@ -77,9 +80,21 @@ export default function AdminDashboard() {
           <p className="text-sm text-slate-400">Vista general de la plataforma</p>
         </div>
         <div className="flex items-center gap-3 flex-shrink-0">
-          <div className="hidden sm:flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-400">
-            <Search className="h-4 w-4" />
-            <span>Buscar...</span>
+          <div className="hidden sm:flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2">
+            <Search className="h-4 w-4 text-slate-400" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  const q = searchQuery.trim();
+                  router.push(q ? `/admin/companies?search=${encodeURIComponent(q)}` : "/admin/companies");
+                }
+              }}
+              placeholder="Buscar empresa..."
+              className="w-40 bg-transparent text-sm text-ink placeholder:text-slate-400 outline-none"
+            />
           </div>
           <button className="relative rounded-xl border border-slate-200 bg-white p-2.5 text-slate-500 hover:bg-slate-50">
             <Bell className="h-4 w-4" />

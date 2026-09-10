@@ -2,6 +2,7 @@
 
 import { Menu, Search, X } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { ConsumerNavButton } from "@/components/consumer/consumer-nav-button";
@@ -18,7 +19,18 @@ const NAV_LINKS = [
 ];
 
 export function SiteHeader() {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const handleSearch = (e: { preventDefault: () => void }) => {
+    e.preventDefault();
+    const q = searchQuery.trim();
+    router.push(q ? `/marketplace?q=${encodeURIComponent(q)}` : "/marketplace");
+    setSearchOpen(false);
+    setSearchQuery("");
+  };
 
   return (
     <header className="sticky top-4 z-30 mx-auto w-full max-w-7xl px-4 md:px-6">
@@ -38,13 +50,43 @@ export function SiteHeader() {
         </nav>
 
         <div className="flex items-center gap-2">
-          <Link
-            href="/marketplace"
-            aria-label="Buscar"
-            className="hidden h-9 w-9 items-center justify-center rounded-xl text-slate-500 transition hover:bg-brand-50 hover:text-brand-700 sm:inline-flex"
-          >
-            <Search className="h-5 w-5" />
-          </Link>
+          <div className="hidden sm:flex items-center gap-2">
+            {searchOpen ? (
+              <form
+                onSubmit={handleSearch}
+                className="flex items-center gap-1 rounded-xl border border-brand-200 bg-white px-2 py-1.5 shadow-sm"
+              >
+                <Search className="h-4 w-4 text-slate-400" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Buscar..."
+                  autoFocus
+                  onBlur={() => {
+                    if (!searchQuery.trim()) setSearchOpen(false);
+                  }}
+                  className="w-32 bg-transparent text-sm text-brand-900 placeholder:text-slate-400 outline-none"
+                />
+                <button
+                  type="submit"
+                  className="text-slate-400 hover:text-brand-700"
+                  aria-label="Buscar"
+                >
+                  <Search className="h-4 w-4" />
+                </button>
+              </form>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setSearchOpen(true)}
+                aria-label="Buscar"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-xl text-slate-500 transition hover:bg-brand-50 hover:text-brand-700"
+              >
+                <Search className="h-5 w-5" />
+              </button>
+            )}
+          </div>
           <ConsumerNavButton variant="ghost" />
           <Link
             href="/login"

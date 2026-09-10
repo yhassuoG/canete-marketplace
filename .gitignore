@@ -17,3 +17,8 @@ Backend/
 infra/vps-ssh-key.txt
 *.pem
 *.key
+
+# Playwright E2E test artifacts
+Frontend/playwright-report/
+Frontend/test-results/
+Frontend/playwright/.cache/
