@@ -2,10 +2,8 @@
 # e2e-tests.yml — Run Playwright E2E tests on PRs and pushes to main
 # =============================================================================
 # Runs E2E tests against:
-#   1. A local Next.js dev server (for PR checks)
+#   1. A local Next.js dev server (for PR checks) — API proxied to production
 #   2. Production (https://vallecanete.com) on main pushes (smoke only)
-#
-# Required: Playwright browsers are cached for speed.
 # =============================================================================
 
 name: E2E Tests
@@ -20,14 +18,16 @@ on:
     branches: [main]
     paths:
       - "Frontend/**"
+      - ".github/workflows/e2e-tests.yml"
   workflow_dispatch:
 
 jobs:
-  # ── E2E on local dev server ─────────────────────────────────────────────
+  # ── E2E on local dev server (PRs only) ─────────────────────────────────
   e2e-local:
     name: E2E Tests (local)
     runs-on: ubuntu-22.04
     timeout-minutes: 15
+    if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
 
     steps:
       - name: Checkout
@@ -48,19 +48,14 @@ jobs:
         working-directory: Frontend
         run: npx playwright install --with-deps chromium
 
-      - name: Cache Playwright browsers
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-chromium-v1
-
-      - name: Run E2E tests
+      - name: Run E2E tests (smoke + marketplace + auth)
         working-directory: Frontend
         env:
           CI: true
-          # Backend API: in CI, use the public URL since there's no local backend
-          NEXT_PUBLIC_API_URL: https://vallecanete.com
-        run: npx playwright test
+          # Proxy API requests to production backend via next.config.ts rewrites
+          API_BACKEND_URL: https://vallecanete.com
+        # Skip tenant-config (needs backend PUT) and mobile (redundant in CI)
+        run: npx playwright test --project=smoke --project=marketplace --project=auth
 
       - name: Upload test results
         if: always()
@@ -72,7 +67,7 @@ jobs:
             Frontend/playwright-report/
           retention-days: 7
 
-  # ── Smoke tests against production ──────────────────────────────────────
+  # ── Smoke tests against production (main pushes) ───────────────────────
   e2e-prod-smoke:
     name: E2E Smoke Tests (production)
     runs-on: ubuntu-22.04
@@ -103,7 +98,8 @@ jobs:
         env:
           CI: true
           BASE_URL: https://vallecanete.com
-        run: npx playwright test project=smoke
+          NEXT_PUBLIC_API_URL: https://vallecanete.com
+        run: npx playwright test --project=smoke
 
       - name: Upload test results
         if: always()
