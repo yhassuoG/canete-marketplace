@@ -105,8 +105,8 @@ jobs:
             ls -la infra/db/17_content_districts_events_news.sql 2>/dev/null || echo "❌ FALTA migración 17"
             
             echo ""
-            echo "=== BUILD BACKEND ==="
-            docker build -t ghcr.io/yhassuog/canete-api:latest -f Backend/Dockerfile Backend/
+            echo "=== BUILD BACKEND (sin cache) ==="
+            docker build --no-cache -t ghcr.io/yhassuog/canete-api:latest -f Backend/Dockerfile Backend/
             
             echo ""
             echo "=== BUILD FRONTEND (sin cache) ==="
