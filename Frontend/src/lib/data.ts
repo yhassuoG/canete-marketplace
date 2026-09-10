@@ -96,7 +96,7 @@ export const featuredBusinesses: Business[] = [
     tagline: "Cocina marina de autor frente al mar",
     priceFrom: 85,
     image: "seafood",
-    imageUrl: "https://picsum.photos/seed/seafood-muelle/800/600",
+    imageUrl: "/placeholder.svg",
     badge: "PATROCINADO",
   },
   {
@@ -111,7 +111,7 @@ export const featuredBusinesses: Business[] = [
     tagline: "Aventura, rafting y vistas al valle",
     priceFrom: 120,
     image: "adventure",
-    imageUrl: "https://picsum.photos/seed/adventure-lunahuana/800/600",
+    imageUrl: "/placeholder.svg",
     badge: "PATROCINADO",
   },
   {
@@ -126,7 +126,7 @@ export const featuredBusinesses: Business[] = [
     tagline: "Enoturismo, catas y gastronomía de valle",
     priceFrom: 65,
     image: "winery",
-    imageUrl: "https://picsum.photos/seed/winery-vina/800/600",
+    imageUrl: "/placeholder.svg",
     badge: "DESTACADO",
   },
   {
@@ -141,7 +141,7 @@ export const featuredBusinesses: Business[] = [
     tagline: "Frente al mar con piscina y spa",
     priceFrom: 150,
     image: "hotel",
-    imageUrl: "https://picsum.photos/seed/hotel-costa-verde/800/600",
+    imageUrl: "/placeholder.svg",
     badge: "DESTACADO",
   },
   {
@@ -156,7 +156,7 @@ export const featuredBusinesses: Business[] = [
     tagline: "Café de especialidad y brunch costero",
     priceFrom: 25,
     image: "cafe",
-    imageUrl: "https://picsum.photos/seed/cafe-puerto/800/600",
+    imageUrl: "/placeholder.svg",
   },
   {
     name: "Surf Cañete",
@@ -170,7 +170,7 @@ export const featuredBusinesses: Business[] = [
     tagline: "Clases y equipos para todos los niveles",
     priceFrom: 40,
     image: "surf",
-    imageUrl: "https://picsum.photos/seed/surf-canete/800/600",
+    imageUrl: "/placeholder.svg",
   },
 ];
 

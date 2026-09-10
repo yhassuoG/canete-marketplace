@@ -3,7 +3,7 @@ import Link from "next/link";
 
 import type { DistrictApiData } from "@/lib/api";
 
-const FALLBACK_IMAGE = "https://picsum.photos/seed/canete-default/800/600";
+const FALLBACK_IMAGE = "/placeholder.svg";
 
 export function DistrictsSection({ districts }: Readonly<{ districts: DistrictApiData[] }>) {
   if (districts.length === 0) return null;

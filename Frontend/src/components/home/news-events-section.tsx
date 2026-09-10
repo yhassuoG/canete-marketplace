@@ -6,8 +6,7 @@ import { useState } from "react";
 
 import type { EventApiData, NewsApiData } from "@/lib/api";
 
-const FALLBACK_IMAGE =
-  "https://picsum.photos/seed/canete-news/800/600";
+const FALLBACK_IMAGE = "/placeholder.svg";
 
 function formatDate(value: string) {
   try {

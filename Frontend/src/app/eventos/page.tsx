@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 };
 
 const FALLBACK_IMAGE =
-  "https://picsum.photos/seed/canete-event/800/600";
+  "/placeholder.svg";
 
 function formatDate(value: string) {
   try {

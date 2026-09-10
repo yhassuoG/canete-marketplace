@@ -22,7 +22,7 @@ interface Props {
 }
 
 const FALLBACK_IMAGE =
-  "https://picsum.photos/seed/canete-district/1200/800";
+  "/placeholder.svg";
 
 function formatDate(value: string) {
   try {

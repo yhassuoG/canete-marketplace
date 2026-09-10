@@ -36,7 +36,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 const FALLBACK_IMAGE =
-  "https://picsum.photos/seed/canete-news/1200/800";
+  "/placeholder.svg";
 
 export default async function NoticiaDetailPage({ params }: Readonly<Props>) {
   const { slug } = await params;

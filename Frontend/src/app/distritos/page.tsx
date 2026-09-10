@@ -14,8 +14,7 @@ export const metadata: Metadata = {
     "Explora los 16 distritos de la provincia de Cañete: Lunahuaná, Cerro Azul, Asia, Imperial y más.",
 };
 
-const FALLBACK_IMAGE =
-  "https://picsum.photos/seed/canete-district/800/600";
+const FALLBACK_IMAGE = "/placeholder.svg";
 
 export default async function DistritosPage() {
   const districts = await fetchDistricts();

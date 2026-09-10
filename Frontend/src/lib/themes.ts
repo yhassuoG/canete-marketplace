@@ -59,8 +59,7 @@ export const THEMES: Record<string, TenantTheme> = {
     gradient: "linear-gradient(135deg, #0c4a6e 0%, #0369a1 60%, #0891b2 100%)",
     heroGradient:
       "linear-gradient(135deg, rgba(12,74,110,0.93) 0%, rgba(8,145,178,0.82) 100%)",
-    heroImage:
-      "https://images.unsplash.com/photo-1567521464027-f127ff144326?w=1600&q=80",
+    heroImage: "/hero-placeholder.svg",
   },
   "paraiso-lunahuana": {
     primary: "#14532d",
@@ -74,8 +73,7 @@ export const THEMES: Record<string, TenantTheme> = {
     gradient: "linear-gradient(135deg, #14532d 0%, #16a34a 100%)",
     heroGradient:
       "linear-gradient(135deg, rgba(20,83,45,0.93) 0%, rgba(22,163,74,0.82) 100%)",
-    heroImage:
-      "https://images.unsplash.com/photo-1501854140801-50d01698950b?w=1600&q=80",
+    heroImage: "/hero-placeholder.svg",
   },
   "vina-del-sol": {
     primary: "#7c1d1d",
@@ -89,8 +87,7 @@ export const THEMES: Record<string, TenantTheme> = {
     gradient: "linear-gradient(135deg, #7c1d1d 0%, #b91c1c 100%)",
     heroGradient:
       "linear-gradient(135deg, rgba(124,29,29,0.93) 0%, rgba(185,28,28,0.85) 100%)",
-    heroImage:
-      "https://images.unsplash.com/photo-1474722883778-792e7990302f?w=1600&q=80",
+    heroImage: "/hero-placeholder.svg",
   },
   "hotel-luna": {
     primary: "#1e1b4b",
@@ -104,8 +101,7 @@ export const THEMES: Record<string, TenantTheme> = {
     gradient: "linear-gradient(135deg, #1e1b4b 0%, #4338ca 100%)",
     heroGradient:
       "linear-gradient(135deg, rgba(30,27,75,0.95) 0%, rgba(67,56,202,0.88) 100%)",
-    heroImage:
-      "https://images.unsplash.com/photo-1506059612708-99d6c258160e?w=1600&q=80",
+    heroImage: "/hero-placeholder.svg",
   },
   "alfajores": {
     primary: "#7c2d12",
