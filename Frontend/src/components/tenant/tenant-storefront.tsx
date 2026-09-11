@@ -186,8 +186,61 @@ function OrderModal({
     ...(allowsDelivery ? ["delivery" as const] : []),
   ];
 
-  // Delivery fee from tenant config (fallback 5)
-  const deliveryFee = tenant.deliveryFee != null ? Number(tenant.deliveryFee) : 5;
+  // Delivery fee — calculated dynamically via /delivery-quote endpoint
+  const [deliveryFee, setDeliveryFee] = useState(0);
+  const [deliveryFree, setDeliveryFree] = useState(false);
+  const [deliveryReject, setDeliveryReject] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (form.type !== "delivery") {
+      setDeliveryFee(0);
+      setDeliveryFree(false);
+      setDeliveryReject(null);
+      return;
+    }
+    // Strategy: free → no need to call API
+    if (tenant.deliveryStrategy === "free") {
+      setDeliveryFee(0);
+      setDeliveryFree(true);
+      setDeliveryReject(null);
+      return;
+    }
+    // Flat with no promotions → use cached value
+    if (tenant.deliveryStrategy === "flat" && !tenant.deliveryFreeThreshold && !tenant.deliveryMinOrder && !tenant.deliveryMaxDistanceKm) {
+      const fee = tenant.deliveryBaseFee != null ? Number(tenant.deliveryBaseFee) : (tenant.deliveryFee != null ? Number(tenant.deliveryFee) : 5);
+      setDeliveryFee(fee);
+      setDeliveryFree(fee === 0);
+      setDeliveryReject(null);
+      return;
+    }
+    // Distance or has promotions → fetch quote from API
+    let cancelled = false;
+    const apiBase = process.env.NEXT_PUBLIC_API_URL || "";
+    const params = new URLSearchParams({
+      tenantId: tenant.id,
+      subtotal: String(total),
+    });
+    if (form.deliveryLat != null) params.set("lat", String(form.deliveryLat));
+    if (form.deliveryLng != null) params.set("lng", String(form.deliveryLng));
+    fetch(`${apiBase}/api/v1/orders/delivery-quote?${params}`)
+      .then(r => r.json())
+      .then(data => {
+        if (cancelled) return;
+        setDeliveryFee(Number(data.fee) || 0);
+        setDeliveryFree(data.free === true);
+        setDeliveryReject(data.rejectReason && data.rejectReason !== "null" ? data.rejectReason : null);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        // Fallback to flat fee
+        const fee = tenant.deliveryFee != null ? Number(tenant.deliveryFee) : 5;
+        setDeliveryFee(fee);
+        setDeliveryFree(false);
+        setDeliveryReject(null);
+      });
+    return () => { cancelled = true; };
+  }, [form.type, form.deliveryLat, form.deliveryLng, total, tenant.id, tenant.deliveryStrategy, tenant.deliveryBaseFee, tenant.deliveryFee, tenant.deliveryFreeThreshold, tenant.deliveryMinOrder, tenant.deliveryMaxDistanceKm]);
+
   const grandTotal = form.type === "delivery" ? total + deliveryFee : total;
 
   // Whether the selected payment requires a confirmation step (Yape/Plin)
@@ -337,10 +390,21 @@ function OrderModal({
                     <span className="font-semibold">S/{(i.price * qty).toFixed(2)}</span>
                   </div>
                 ))}
-                {form.type === "delivery" && deliveryFee > 0 && (
+                {form.type === "delivery" && deliveryFree && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-emerald-600 font-medium">Delivery</span>
+                    <span className="font-medium text-emerald-600">¡Gratis!</span>
+                  </div>
+                )}
+                {form.type === "delivery" && !deliveryFree && deliveryFee > 0 && (
                   <div className="flex justify-between text-sm">
                     <span className="text-slate-500">Delivery</span>
                     <span className="font-medium text-slate-600">S/{deliveryFee}</span>
+                  </div>
+                )}
+                {form.type === "delivery" && deliveryReject && (
+                  <div className="text-sm text-red-600 font-medium bg-red-50 rounded-lg px-3 py-2">
+                    ⚠️ {deliveryReject}
                   </div>
                 )}
                 <div className="flex justify-between text-sm font-bold border-t border-slate-200 pt-2 mt-2">
@@ -379,6 +443,7 @@ function OrderModal({
                       {t === "pickup" ? <Package className="h-4 w-4"/> : <Bike className="h-4 w-4"/>}
                       {t === "pickup"
                         ? "Recojo en local"
+                        : deliveryFree ? "Delivery gratis"
                         : deliveryFee > 0 ? `Delivery (S/${deliveryFee})` : "Delivery"}
                     </button>
                   ))}
@@ -466,11 +531,13 @@ function OrderModal({
             </div>
 
             <div className="border-t px-6 pb-6 pt-4">
-              <button type="submit" disabled={submitting}
+              <button type="submit" disabled={submitting || (form.type === "delivery" && !!deliveryReject)}
                 className="w-full rounded-2xl py-3.5 text-sm font-bold text-white transition active:scale-[0.98] disabled:opacity-60"
                 style={{ background: "var(--tenant-gradient)" }}>
                 {submitting
                   ? "Procesando…"
+                  : form.type === "delivery" && deliveryReject
+                  ? "Delivery no disponible"
                   : needsPaymentRef ? `Pagar con ${paymentLabel} →` : `Confirmar pedido · S/${grandTotal}`}
               </button>
             </div>

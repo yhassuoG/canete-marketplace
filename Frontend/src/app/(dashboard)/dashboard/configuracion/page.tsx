@@ -8,7 +8,7 @@ import { getApiBase } from "@/lib/api-base";
 
 const MapPicker = dynamic(() => import("@/components/dashboard/map-picker"), { ssr: false });
 import { motion } from "framer-motion";
-import { Settings, Bell, Shield, Save, Palette, Store, Loader2, ImagePlus, Upload, X, CreditCard, Banknote, Smartphone, Wallet } from "lucide-react";
+import { Settings, Bell, Shield, Save, Palette, Store, Loader2, ImagePlus, Upload, X, CreditCard, Banknote, Smartphone, Wallet, Bike, Package } from "lucide-react";
 
 const API_BASE = getApiBase();
 
@@ -21,6 +21,16 @@ export default function ConfiguracionPage() {
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [notif, setNotif]   = useState({ newReservation: true, newOrder: true, newReview: true, dailySummary: true, weeklySummary: false, lowStock: true });
   const [payMethods, setPayMethods] = useState({ yape: false, plin: false, cash: true, card: false });
+  const [delivery, setDelivery] = useState({
+    allowsDelivery: true,
+    allowsPickup: true,
+    strategy: "flat" as "flat" | "distance" | "free",
+    baseFee: "5",
+    perKm: "1.50",
+    freeThreshold: "",
+    minOrder: "",
+    maxDistanceKm: "",
+  });
   const [theme, setTheme]   = useState({ primary: "#0c4a6e", accent: "#f97316", radius: "rounded" });
   const [info, setInfo]     = useState({
     name: "", tagline: "", address: "", phone: "", description: "",
@@ -66,6 +76,18 @@ export default function ConfiguracionPage() {
           plin: apiData.plinEnabled ?? false,
           cash: apiData.cashEnabled ?? true,
           card: apiData.cardEnabled ?? false,
+        });
+        // Cargar configuración de delivery
+        const rawBaseFee = apiData.deliveryBaseFee != null ? apiData.deliveryBaseFee : apiData.deliveryFee;
+        setDelivery({
+          allowsDelivery: apiData.allowsDelivery ?? true,
+          allowsPickup: apiData.allowsPickup ?? true,
+          strategy: (apiData.deliveryStrategy as "flat" | "distance" | "free") ?? "flat",
+          baseFee: rawBaseFee != null ? String(rawBaseFee) : "5",
+          perKm: apiData.deliveryPerKm != null ? String(apiData.deliveryPerKm) : "1.50",
+          freeThreshold: apiData.deliveryFreeThreshold != null ? String(apiData.deliveryFreeThreshold) : "",
+          minOrder: apiData.deliveryMinOrder != null ? String(apiData.deliveryMinOrder) : "",
+          maxDistanceKm: apiData.deliveryMaxDistanceKm != null ? String(apiData.deliveryMaxDistanceKm) : "",
         });
         // Update localStorage cache so storefront can read it even if API is down
         localStorage.setItem(`coords_${slug}`, JSON.stringify({
@@ -174,6 +196,14 @@ export default function ConfiguracionPage() {
           plinEnabled: payMethods.plin,
           cashEnabled: payMethods.cash,
           cardEnabled: payMethods.card,
+          allowsDelivery: delivery.allowsDelivery,
+          allowsPickup: delivery.allowsPickup,
+          deliveryStrategy: delivery.strategy,
+          deliveryBaseFee: delivery.baseFee,
+          deliveryPerKm: delivery.perKm,
+          deliveryFreeThreshold: delivery.freeThreshold,
+          deliveryMinOrder: delivery.minOrder,
+          deliveryMaxDistanceKm: delivery.maxDistanceKm,
         })
       : null;
 
@@ -293,6 +323,126 @@ export default function ConfiguracionPage() {
               <Shield className="h-3.5 w-3.5"/>
               Debes tener al menos un método de pago activo para recibir pedidos.
             </p>
+          )}
+        </motion.div>
+
+        {/* Delivery pricing */}
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+          className="rounded-3xl border border-slate-100 bg-white p-6 shadow-soft lg:col-span-2">
+          <div className="flex items-center gap-2 mb-4"><Bike className="h-4 w-4 text-[#0c4a6e]"/><h3 className="font-semibold text-ink">Configuración de Delivery</h3></div>
+
+          {/* Toggles: delivery / pickup */}
+          <div className="grid gap-3 sm:grid-cols-2 mb-5">
+            <div className={`flex items-center justify-between rounded-2xl border p-4 transition-colors ${delivery.allowsDelivery ? "border-[#0c4a6e]/20 bg-[#0c4a6e]/5" : "border-slate-200 bg-white"}`}>
+              <div className="flex items-center gap-3">
+                <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${delivery.allowsDelivery ? "bg-[#0c4a6e]/10 text-[#0c4a6e]" : "bg-slate-100 text-slate-400"}`}><Bike className="h-5 w-5"/></div>
+                <div><p className="text-sm font-semibold text-ink">Delivery</p><p className="text-xs text-slate-400">Entrega a domicilio</p></div>
+              </div>
+              <button onClick={() => setDelivery(p => ({ ...p, allowsDelivery: !p.allowsDelivery }))} className={`relative h-6 w-11 rounded-full transition-colors ${delivery.allowsDelivery ? "bg-[#0c4a6e]" : "bg-slate-200"}`}>
+                <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${delivery.allowsDelivery ? "translate-x-5" : "translate-x-0.5"}`}/>
+              </button>
+            </div>
+            <div className={`flex items-center justify-between rounded-2xl border p-4 transition-colors ${delivery.allowsPickup ? "border-[#0c4a6e]/20 bg-[#0c4a6e]/5" : "border-slate-200 bg-white"}`}>
+              <div className="flex items-center gap-3">
+                <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${delivery.allowsPickup ? "bg-[#0c4a6e]/10 text-[#0c4a6e]" : "bg-slate-100 text-slate-400"}`}><Package className="h-5 w-5"/></div>
+                <div><p className="text-sm font-semibold text-ink">Recojo en local</p><p className="text-xs text-slate-400">Pickup</p></div>
+              </div>
+              <button onClick={() => setDelivery(p => ({ ...p, allowsPickup: !p.allowsPickup }))} className={`relative h-6 w-11 rounded-full transition-colors ${delivery.allowsPickup ? "bg-[#0c4a6e]" : "bg-slate-200"}`}>
+                <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${delivery.allowsPickup ? "translate-x-5" : "translate-x-0.5"}`}/>
+              </button>
+            </div>
+          </div>
+
+          {delivery.allowsDelivery && (
+            <div className="space-y-5">
+              {/* Strategy selector */}
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Estrategia de tarifa</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {([
+                    { id: "flat", label: "Tarifa fija", desc: "Costo fijo" },
+                    { id: "distance", label: "Por distancia", desc: "Base + km" },
+                    { id: "free", label: "Gratis", desc: "Siempre free" },
+                  ] as const).map(s => (
+                    <button key={s.id} type="button" onClick={() => setDelivery(p => ({ ...p, strategy: s.id }))}
+                      className={`rounded-2xl border p-3 text-center transition-all ${delivery.strategy === s.id ? "border-[#0c4a6e] bg-[#0c4a6e]/5" : "border-slate-200 hover:bg-slate-50"}`}>
+                      <p className={`text-sm font-semibold ${delivery.strategy === s.id ? "text-[#0c4a6e]" : "text-ink"}`}>{s.label}</p>
+                      <p className="text-xs text-slate-400">{s.desc}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Strategy-specific fields */}
+              {delivery.strategy === "flat" && (
+                <div>
+                  <label className="block text-xs font-medium text-slate-500 mb-1">Tarifa fija de delivery (S/)</label>
+                  <input type="number" step="0.50" min="0" value={delivery.baseFee} onChange={e => setDelivery(p => ({ ...p, baseFee: e.target.value }))}
+                    placeholder="5.00" className="w-full rounded-2xl border border-slate-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0c4a6e]/20"/>
+                </div>
+              )}
+
+              {delivery.strategy === "distance" && (
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div>
+                    <label className="block text-xs font-medium text-slate-500 mb-1">Tarifa base (S/)</label>
+                    <input type="number" step="0.50" min="0" value={delivery.baseFee} onChange={e => setDelivery(p => ({ ...p, baseFee: e.target.value }))}
+                      placeholder="2.00" className="w-full rounded-2xl border border-slate-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0c4a6e]/20"/>
+                    <p className="text-xs text-slate-400 mt-1">Costo inicial al solicitar delivery</p>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-500 mb-1">Costo por km (S/)</label>
+                    <input type="number" step="0.10" min="0" value={delivery.perKm} onChange={e => setDelivery(p => ({ ...p, perKm: e.target.value }))}
+                      placeholder="1.50" className="w-full rounded-2xl border border-slate-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0c4a6e]/20"/>
+                    <p className="text-xs text-slate-400 mt-1">Se calcula la distancia del local al cliente</p>
+                  </div>
+                </div>
+              )}
+
+              {delivery.strategy === "free" && (
+                <div className="rounded-2xl bg-emerald-50 border border-emerald-200 p-4">
+                  <p className="text-sm text-emerald-700 font-medium">✓ Delivery gratis para todos los pedidos</p>
+                </div>
+              )}
+
+              {/* Promotional rules */}
+              <div className="border-t border-slate-100 pt-4">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3">Reglas promocionales (opcional)</label>
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <div>
+                    <label className="block text-xs font-medium text-slate-500 mb-1">Delivery gratis desde (S/)</label>
+                    <input type="number" step="1" min="0" value={delivery.freeThreshold} onChange={e => setDelivery(p => ({ ...p, freeThreshold: e.target.value }))}
+                      placeholder="Ej: 50" className="w-full rounded-2xl border border-slate-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0c4a6e]/20"/>
+                    <p className="text-xs text-slate-400 mt-1">Pedido mínimo para delivery gratis</p>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-500 mb-1">Pedido mínimo (S/)</label>
+                    <input type="number" step="1" min="0" value={delivery.minOrder} onChange={e => setDelivery(p => ({ ...p, minOrder: e.target.value }))}
+                      placeholder="Ej: 15" className="w-full rounded-2xl border border-slate-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0c4a6e]/20"/>
+                    <p className="text-xs text-slate-400 mt-1">Mínimo requerido para delivery</p>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-500 mb-1">Radio máximo (km)</label>
+                    <input type="number" step="0.5" min="0" value={delivery.maxDistanceKm} onChange={e => setDelivery(p => ({ ...p, maxDistanceKm: e.target.value }))}
+                      placeholder="Ej: 10" className="w-full rounded-2xl border border-slate-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0c4a6e]/20"/>
+                    <p className="text-xs text-slate-400 mt-1">Distancia máxima de entrega</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Summary preview */}
+              <div className="rounded-2xl bg-slate-50 p-4">
+                <p className="text-xs font-semibold text-slate-500 mb-2">Vista previa</p>
+                <p className="text-sm text-slate-600">
+                  {delivery.strategy === "free" && "Todos los pedidos tienen delivery gratis."}
+                  {delivery.strategy === "flat" && `Delivery: S/${delivery.baseFee || "0"} por pedido.`}
+                  {delivery.strategy === "distance" && `Delivery: S/${delivery.baseFee || "0"} + S/${delivery.perKm || "0"}/km desde el local.`}
+                  {delivery.freeThreshold && ` Gratis en pedidos ≥ S/${delivery.freeThreshold}.`}
+                  {delivery.minOrder && ` Mínimo S/${delivery.minOrder}.`}
+                  {delivery.maxDistanceKm && ` Radio máx ${delivery.maxDistanceKm} km.`}
+                </p>
+              </div>
+            </div>
           )}
         </motion.div>
 

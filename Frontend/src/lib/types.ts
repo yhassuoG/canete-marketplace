@@ -59,6 +59,13 @@ export interface Tenant {
   allowsDelivery?: boolean | null;
   allowsPickup?: boolean | null;
   deliveryFee?: number | null;
+  // Delivery pricing (migration 25)
+  deliveryStrategy?: "flat" | "distance" | "free" | null;
+  deliveryBaseFee?: number | null;
+  deliveryPerKm?: number | null;
+  deliveryFreeThreshold?: number | null;
+  deliveryMinOrder?: number | null;
+  deliveryMaxDistanceKm?: number | null;
   // Payment methods
   cashEnabled?: boolean | null;
   cardEnabled?: boolean | null;

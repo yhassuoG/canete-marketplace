@@ -40,6 +40,13 @@ export interface TenantApiData {
   cashEnabled: boolean | null;
   cardEnabled: boolean | null;
   deliveryFee: number | null;
+  // Delivery pricing (migration 25)
+  deliveryStrategy: string | null;
+  deliveryBaseFee: number | null;
+  deliveryPerKm: number | null;
+  deliveryFreeThreshold: number | null;
+  deliveryMinOrder: number | null;
+  deliveryMaxDistanceKm: number | null;
   // Yape
   yapeEnabled: boolean | null;
   yapePhone: string | null;
@@ -72,6 +79,13 @@ export interface UpdateTenantConfigPayload {
   cashEnabled?: boolean;
   cardEnabled?: boolean;
   deliveryFee?: string;
+  // Delivery pricing (migration 25)
+  deliveryStrategy?: string;
+  deliveryBaseFee?: string;
+  deliveryPerKm?: string;
+  deliveryFreeThreshold?: string;
+  deliveryMinOrder?: string;
+  deliveryMaxDistanceKm?: string;
   // Yape
   yapeEnabled?: boolean;
   yapePhone?: string;
