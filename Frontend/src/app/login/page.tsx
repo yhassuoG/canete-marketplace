@@ -3,23 +3,23 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Eye, EyeOff, LogIn, ShoppingBag, Store } from "lucide-react";
+import { Eye, EyeOff, LogIn, Store } from "lucide-react";
 import {
   setAuthCookie,
   getAuthUser,
   type AuthUser,
 } from "@/lib/auth";
-import { getMarketplaceAccount } from "@/lib/marketplace-account";
 import { fetchTenants } from "@/lib/api";
 import { getApiBase } from "@/lib/api-base";
-import { GoogleSignInButton } from "@/components/consumer/google-sign-in-button";
-import { TenantGoogleProvider } from "@/components/providers/tenant-google-provider";
 
-type Tab = "consumer" | "business";
-
+/**
+ * Página de login SOLO para dueños de negocio y admins (email/password).
+ * Los consumidores (clientes) inician sesión mediante un modal de Google
+ * que aparece en la misma página (home, marketplace, storefront) a través
+ * del componente ConsumerNavButton / CustomerSignInButton.
+ */
 export default function LoginPage() {
   const router = useRouter();
-  const [tab, setTab] = useState<Tab>("consumer");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -28,18 +28,11 @@ export default function LoginPage() {
 
   // If already logged in, redirect to the right place
   useEffect(() => {
-    // Consumer already logged in → /mi-cuenta
-    const consumer = getMarketplaceAccount();
-    if (consumer && tab === "consumer") {
-      router.replace("/mi-cuenta");
-      return;
-    }
-    // Business/admin already logged in → /admin or /dashboard
     const user = getAuthUser();
     if (user) {
       router.replace(user.role === "admin" ? "/admin" : "/dashboard");
     }
-  }, [router, tab]);
+  }, [router]);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -100,196 +93,120 @@ export default function LoginPage() {
   }
 
   return (
-    <TenantGoogleProvider>
-      <main className="min-h-screen flex items-center justify-center bg-[#0d1117] px-4 py-10">
-        {/* Background blobs */}
-        <div className="pointer-events-none fixed inset-0 overflow-hidden">
-          <div className="absolute -top-40 -left-40 h-96 w-96 rounded-full bg-indigo-600/20 blur-3xl" />
-          <div className="absolute -bottom-40 -right-40 h-96 w-96 rounded-full bg-violet-600/20 blur-3xl" />
-        </div>
+    <main className="min-h-screen flex items-center justify-center bg-[#0d1117] px-4 py-10">
+      {/* Background blobs */}
+      <div className="pointer-events-none fixed inset-0 overflow-hidden">
+        <div className="absolute -top-40 -left-40 h-96 w-96 rounded-full bg-indigo-600/20 blur-3xl" />
+        <div className="absolute -bottom-40 -right-40 h-96 w-96 rounded-full bg-violet-600/20 blur-3xl" />
+      </div>
 
-        <div className="relative w-full max-w-md">
-          {/* Logo */}
-          <motion.div
-            initial={{ opacity: 0, y: -16 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-8 flex flex-col items-center"
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo.webp" alt="vallecanete" className="mb-4 h-14 w-14 rounded-2xl object-cover shadow-lg" />
-            <h1 className="text-2xl font-bold text-white">vallecanete</h1>
-            <p className="mt-1 text-sm text-white/50">Explora, compra y reserva en Cañete</p>
-          </motion.div>
+      <div className="relative w-full max-w-md">
+        {/* Logo */}
+        <motion.div
+          initial={{ opacity: 0, y: -16 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-8 flex flex-col items-center"
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo.webp" alt="vallecanete" className="mb-4 h-14 w-14 rounded-2xl object-cover shadow-lg" />
+          <h1 className="text-2xl font-bold text-white">vallecanete</h1>
+          <p className="mt-1 text-sm text-white/50">Panel de gestión de negocios</p>
+        </motion.div>
 
-          {/* Tabs */}
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.05 }}
-            className="mb-4 grid grid-cols-2 gap-1 rounded-2xl border border-white/10 bg-white/5 p-1"
-          >
-            <button
-              type="button"
-              onClick={() => { setTab("consumer"); setError(""); }}
-              className={`flex items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-semibold transition-all ${
-                tab === "consumer"
-                  ? "bg-gradient-to-br from-coral to-orange-500 text-white shadow-lg"
-                  : "text-white/50 hover:text-white/80"
-              }`}
-            >
-              <ShoppingBag className="h-4 w-4" />
-              Consumidor
-            </button>
-            <button
-              type="button"
-              onClick={() => { setTab("business"); setError(""); }}
-              className={`flex items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-semibold transition-all ${
-                tab === "business"
-                  ? "bg-gradient-to-br from-indigo-500 to-violet-500 text-white shadow-lg"
-                  : "text-white/50 hover:text-white/80"
-              }`}
-            >
-              <Store className="h-4 w-4" />
-              Negocio
-            </button>
-          </motion.div>
+        {/* ── BUSINESS LOGIN ─────────────────────────────────────────────── */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="rounded-2xl border border-white/10 bg-white/5 p-8 backdrop-blur-xl"
+        >
+          <div className="mb-6 flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-500">
+              <Store className="h-5 w-5 text-white" />
+            </div>
+            <div>
+              <h2 className="text-lg font-bold text-white">Acceder como negocio</h2>
+              <p className="text-sm text-white/50">Gestiona tu tienda, productos y pedidos</p>
+            </div>
+          </div>
 
-          {/* ── CONSUMER TAB ─────────────────────────────────────────────── */}
-          {tab === "consumer" && (
-            <motion.div
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="rounded-2xl border border-white/10 bg-white/5 p-8 backdrop-blur-xl"
-            >
-              <h2 className="text-lg font-bold text-white mb-1">Ingresar como consumidor</h2>
-              <p className="text-sm text-white/50 mb-6">
-                Compra, pide delivery, reserva y acumula puntos en tus tiendas favoritas.
-              </p>
-
-              {error && (
-                <motion.p
-                  initial={{ opacity: 0, y: -4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="mb-4 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400"
-                >
-                  {error}
-                </motion.p>
-              )}
-
-              <GoogleSignInButton
-                onSuccess={() => router.push("/mi-cuenta")}
-                onError={(msg) => setError(msg)}
-                label="Continuar con Google"
-                className="flex w-full items-center justify-center gap-3 rounded-xl border border-white/10 bg-white px-4 py-3 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 transition-colors disabled:opacity-60"
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {/* Email */}
+            <div>
+              <label htmlFor="login-email" className="mb-1.5 block text-xs font-medium text-white/60">
+                Correo electrónico
+              </label>
+              <input
+                id="login-email"
+                type="email"
+                required
+                autoComplete="email"
+                value={email}
+                onChange={(e) => { setEmail(e.target.value); setError(""); }}
+                placeholder="tu@correo.com"
+                className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder-white/20 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30"
               />
+            </div>
 
-              <div className="my-6 flex items-center gap-3">
-                <div className="h-px flex-1 bg-white/10" />
-                <span className="text-xs text-white/30">o crea tu cuenta</span>
-                <div className="h-px flex-1 bg-white/10" />
-              </div>
-
-              <button
-                type="button"
-                onClick={() => router.push("/marketplace")}
-                className="flex w-full items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium text-white/80 hover:bg-white/10 transition"
-              >
-                <ShoppingBag className="h-4 w-4" />
-                Explorar marketplace sin cuenta
-              </button>
-
-              <p className="mt-6 text-center text-xs text-white/40">
-                Al continuar aceptas los Términos y la Política de privacidad de Cañete Marketplace.
-              </p>
-            </motion.div>
-          )}
-
-          {/* ── BUSINESS TAB ─────────────────────────────────────────────── */}
-          {tab === "business" && (
-            <motion.div
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="rounded-2xl border border-white/10 bg-white/5 p-8 backdrop-blur-xl"
-            >
-              <h2 className="text-lg font-bold text-white mb-1">Panel de gestión</h2>
-              <p className="text-sm text-white/50 mb-6">Accede al dashboard de tu negocio</p>
-
-              <form onSubmit={handleSubmit} className="space-y-5">
-                {/* Email */}
-                <div>
-                  <label htmlFor="login-email" className="mb-1.5 block text-xs font-medium text-white/60">
-                    Correo electrónico
-                  </label>
-                  <input
-                    id="login-email"
-                    type="email"
-                    required
-                    autoComplete="email"
-                    value={email}
-                    onChange={(e) => { setEmail(e.target.value); setError(""); }}
-                    placeholder="tu@correo.com"
-                    className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder-white/20 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30"
-                  />
-                </div>
-
-                {/* Password */}
-                <div>
-                  <label htmlFor="login-password" className="mb-1.5 block text-xs font-medium text-white/60">
-                    Contraseña
-                  </label>
-                  <div className="relative">
-                    <input
-                      id="login-password"
-                      type={showPassword ? "text" : "password"}
-                      required
-                      autoComplete="current-password"
-                      value={password}
-                      onChange={(e) => { setPassword(e.target.value); setError(""); }}
-                      placeholder="••••••••"
-                      className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 pr-11 text-sm text-white placeholder-white/20 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword((v) => !v)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 transition"
-                    >
-                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Error */}
-                {error && (
-                  <motion.p
-                    initial={{ opacity: 0, y: -4 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400"
-                  >
-                    {error}
-                  </motion.p>
-                )}
-
-                {/* Submit */}
+            {/* Password */}
+            <div>
+              <label htmlFor="login-password" className="mb-1.5 block text-xs font-medium text-white/60">
+                Contraseña
+              </label>
+              <div className="relative">
+                <input
+                  id="login-password"
+                  type={showPassword ? "text" : "password"}
+                  required
+                  autoComplete="current-password"
+                  value={password}
+                  onChange={(e) => { setPassword(e.target.value); setError(""); }}
+                  placeholder="••••••••"
+                  className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 pr-11 text-sm text-white placeholder-white/20 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30"
+                />
                 <button
-                  type="submit"
-                  disabled={loading}
-                  className="flex w-full items-center justify-center gap-2 rounded-xl py-3 text-sm font-semibold text-white transition disabled:opacity-60"
-                  style={{ background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)" }}
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 transition"
                 >
-                  {loading ? (
-                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-                  ) : (
-                    <>
-                      <LogIn className="h-4 w-4" /> Ingresar
-                    </>
-                  )}
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
-              </form>
-            </motion.div>
-          )}
+              </div>
+            </div>
 
-        </div>
-      </main>
-    </TenantGoogleProvider>
+            {/* Error */}
+            {error && (
+              <motion.p
+                initial={{ opacity: 0, y: -4 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400"
+              >
+                {error}
+              </motion.p>
+            )}
+
+            {/* Submit */}
+            <button
+              type="submit"
+              disabled={loading}
+              className="flex w-full items-center justify-center gap-2 rounded-xl py-3 text-sm font-semibold text-white transition disabled:opacity-60"
+              style={{ background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)" }}
+            >
+              {loading ? (
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+              ) : (
+                <>
+                  <LogIn className="h-4 w-4" /> Ingresar
+                </>
+              )}
+            </button>
+          </form>
+
+          <p className="mt-6 text-center text-xs text-white/40">
+            ¿Eres cliente? Inicia sesión desde la página principal o el marketplace.
+          </p>
+        </motion.div>
+
+      </div>
+    </main>
   );
 }
