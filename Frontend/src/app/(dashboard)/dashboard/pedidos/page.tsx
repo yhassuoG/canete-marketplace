@@ -484,7 +484,10 @@ export default function DashboardPedidosPage() {
             const statusInfo = STATUS_FLOW[order.status] ?? STATUS_FLOW.pending;
             const StatusIcon = statusInfo.icon;
             const isExpanded = expandedId === order.id;
-            const canAdvance = !!statusInfo.next;
+            // Bloquear avance si es Yape/Plin y el pago no está aprobado
+            const isNativeYapePlin = order.paymentMethod && ["yape", "plin"].includes(order.paymentMethod.toLowerCase());
+            const paymentBlocked = isNativeYapePlin && order.paymentStatus !== "APPROVED";
+            const canAdvance = !!statusInfo.next && !paymentBlocked;
             const canCancel = order.status !== "delivered" && order.status !== "cancelled";
             const isUpdating = updatingId === order.id;
 
@@ -854,6 +857,12 @@ export default function DashboardPedidosPage() {
                           {!canAdvance && order.status === "cancelled" && (
                             <span className="flex items-center gap-2 text-sm text-red-500 font-medium">
                               <XCircle className="h-4 w-4" /> Pedido cancelado
+                            </span>
+                          )}
+                          {paymentBlocked && order.status !== "cancelled" && order.status !== "payment_rejected" && (
+                            <span className="flex items-center gap-2 text-sm text-amber-600 font-medium">
+                              <AlertCircle className="h-4 w-4" />
+                              Pago pendiente de verificación
                             </span>
                           )}
                           <button

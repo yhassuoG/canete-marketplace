@@ -1056,6 +1056,35 @@ export async function fetchReservationsByTenant(
   }
 }
 
+/** Cancela una reserva por ID. */
+export async function cancelReservation(
+  reservationId: string
+): Promise<ReservationApiData | null> {
+  const res = await fetch(
+    `${API_BASE}/api/v1/reservations/${reservationId}/cancel`,
+    { method: "PATCH" }
+  );
+  if (!res.ok) return null;
+  return (await res.json()) as ReservationApiData;
+}
+
+/** Actualiza el estado de una reserva. */
+export async function updateReservationStatus(
+  reservationId: string,
+  status: string
+): Promise<ReservationApiData | null> {
+  const res = await fetch(
+    `${API_BASE}/api/v1/reservations/${reservationId}/status`,
+    {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status }),
+    }
+  );
+  if (!res.ok) return null;
+  return (await res.json()) as ReservationApiData;
+}
+
 // ── Coupons ──────────────────────────────────────────────────────────────────
 
 export interface CouponApiData {

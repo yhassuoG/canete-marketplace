@@ -2,11 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Calendar, Users, Search, CheckCircle2, XCircle, AlertCircle, ChevronRight } from "lucide-react";
+import { Calendar, Users, Search, CheckCircle2, XCircle, AlertCircle, ChevronRight, Loader2 } from "lucide-react";
 import { StatusBadge } from "@/components/ui/status-badge";
 import type { ReservationStatus } from "@/lib/types";
 import { getAuthUser } from "@/lib/auth";
-import { fetchReservationsByTenant, type ReservationApiData } from "@/lib/api";
+import { fetchReservationsByTenant, cancelReservation, updateReservationStatus, type ReservationApiData } from "@//lib/api";
 
 const STATUS_FILTER_OPTIONS: Array<{ value: ReservationStatus | "all"; label: string }> = [
   { value: "all", label: "Todas" },
@@ -49,6 +49,9 @@ export default function ReservasPage() {
   const [selected, setSelected] = useState<ReservationApiData | null>(null);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<ReservationStatus | "all">("all");
+  const [cancelling, setCancelling] = useState(false);
+  const [confirming, setConfirming] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   useEffect(() => {
     const user = getAuthUser();
@@ -56,7 +59,7 @@ export default function ReservasPage() {
       setLoading(false);
       return;
     }
-    fetchReservationsByTenant(user.tenantSlug).then(data => {
+    void fetchReservationsByTenant(user.tenantSlug).then(data => {
       setReservations(data);
       setLoading(false);
     });
@@ -73,6 +76,42 @@ export default function ReservasPage() {
     confirmed: reservations.filter(r => r.status === "confirmed").length,
     pending: reservations.filter(r => r.status === "pending").length,
     revenue: reservations.filter(r => r.status !== "cancelled").reduce((s, r) => s + (r.total || 0), 0),
+  };
+
+  const handleCancel = async (id: string) => {
+    setCancelling(true);
+    setActionError(null);
+    try {
+      const updated = await cancelReservation(id);
+      if (updated) {
+        setReservations(prev => prev.map(r => r.id === id ? updated : r));
+        setSelected(updated);
+      } else {
+        setActionError("No se pudo cancelar la reserva. Verifica que no esté completada.");
+      }
+    } catch {
+      setActionError("Error al cancelar la reserva.");
+    } finally {
+      setCancelling(false);
+    }
+  };
+
+  const handleConfirm = async (id: string) => {
+    setConfirming(true);
+    setActionError(null);
+    try {
+      const updated = await updateReservationStatus(id, "confirmed");
+      if (updated) {
+        setReservations(prev => prev.map(r => r.id === id ? updated : r));
+        setSelected(updated);
+      } else {
+        setActionError("No se pudo confirmar la reserva.");
+      }
+    } catch {
+      setActionError("Error al confirmar la reserva.");
+    } finally {
+      setConfirming(false);
+    }
   };
 
   return (
@@ -177,10 +216,46 @@ export default function ReservasPage() {
                     </div>
                   ))}
                 </dl>
+                {actionError && (
+                  <div className="mt-4 rounded-xl bg-red-50 border border-red-200 px-3 py-2 text-xs text-red-600">
+                    {actionError}
+                  </div>
+                )}
                 {selected.status === "pending" && (
                   <div className="mt-6 flex gap-2">
-                    <button className="flex-1 rounded-xl bg-emerald-500 py-2.5 text-sm font-semibold text-white">Confirmar</button>
-                    <button className="flex-1 rounded-xl border border-red-200 py-2.5 text-sm font-semibold text-red-500">Rechazar</button>
+                    <button
+                      onClick={() => handleConfirm(selected.id)}
+                      disabled={confirming || cancelling}
+                      className="flex-1 rounded-xl bg-emerald-500 py-2.5 text-sm font-semibold text-white hover:bg-emerald-600 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                    >
+                      {confirming && <Loader2 className="h-4 w-4 animate-spin" />}
+                      Confirmar
+                    </button>
+                    <button
+                      onClick={() => handleCancel(selected.id)}
+                      disabled={confirming || cancelling}
+                      className="flex-1 rounded-xl border border-red-200 py-2.5 text-sm font-semibold text-red-500 hover:bg-red-50 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                    >
+                      {cancelling && <Loader2 className="h-4 w-4 animate-spin" />}
+                      Cancelar
+                    </button>
+                  </div>
+                )}
+                {selected.status === "confirmed" && (
+                  <div className="mt-6">
+                    <button
+                      onClick={() => handleCancel(selected.id)}
+                      disabled={cancelling}
+                      className="w-full rounded-xl border border-red-200 py-2.5 text-sm font-semibold text-red-500 hover:bg-red-50 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                    >
+                      {cancelling && <Loader2 className="h-4 w-4 animate-spin" />}
+                      Cancelar reserva
+                    </button>
+                  </div>
+                )}
+                {selected.status === "cancelled" && (
+                  <div className="mt-6 rounded-xl bg-slate-50 border border-slate-200 px-3 py-2 text-xs text-slate-500 text-center">
+                    Reserva cancelada
                   </div>
                 )}
               </motion.div>

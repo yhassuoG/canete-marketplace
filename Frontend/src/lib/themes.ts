@@ -130,103 +130,6 @@ export const PRESET_SWATCHES = [
   { id: "midnight", label: "Medianoche", primary: "#0f172a", accent: "#38bdf8" },
 ];
 
-// ─── Mock tenant data ─────────────────────────────────────────────────────────
-
-export const TENANTS: Tenant[] = [
-  {
-    id: "1",
-    slug: "muelle-pacifico",
-    name: "Muelle Pacifico",
-    tagline: "La mejor cocina marina de Cañete",
-    category: "restaurant",
-    location: "San Vicente de Cañete",
-    plan: "premium",
-    status: "active",
-    rating: 4.9,
-    reviewCount: 312,
-    monthlyRevenue: 12450,
-    reservationsThisMonth: 89,
-    ordersThisMonth: 245,
-    description:
-      "Restaurante de cocina marina y criolla ubicado frente al mar. Especialidad en ceviche, tiradito y mariscos frescos del día.",
-    theme: THEMES["muelle-pacifico"],
-    createdAt: "2024-01-15",
-    owner: "Carlos Muelle",
-    phone: "+51 987 654 321",
-    email: "hola@muellepacifico.pe",
-    features: ["reservations", "delivery", "catalog", "reviews", "loyalty"],
-  },
-  {
-    id: "2",
-    slug: "paraiso-lunahuana",
-    name: "Paraiso Lunahuana",
-    tagline: "Aventura y naturaleza en el valle",
-    category: "hotel",
-    location: "Lunahuana",
-    plan: "premium",
-    status: "active",
-    rating: 4.8,
-    reviewCount: 198,
-    monthlyRevenue: 18900,
-    reservationsThisMonth: 47,
-    ordersThisMonth: 0,
-    description:
-      "Lodge de aventura rodeado de naturaleza. Actividades de rafting, tirolesa y senderismo con vistas al río Cañete.",
-    theme: THEMES["paraiso-lunahuana"],
-    createdAt: "2024-02-01",
-    owner: "Ana Torres",
-    phone: "+51 986 543 210",
-    email: "reservas@paraisolunahuana.pe",
-    features: ["reservations", "tickets", "catalog", "reviews"],
-  },
-  {
-    id: "3",
-    slug: "vina-del-sol",
-    name: "Viña del Sol",
-    tagline: "Enoturismo en el corazón de Cañete",
-    category: "winery",
-    location: "Nuevo Imperial",
-    plan: "starter",
-    status: "active",
-    rating: 4.7,
-    reviewCount: 143,
-    monthlyRevenue: 7200,
-    reservationsThisMonth: 32,
-    ordersThisMonth: 67,
-    description:
-      "Viña boutique con tradición familiar de más de 60 años. Tours por los viñedos, degustaciones y maridaje gourmet.",
-    theme: THEMES["vina-del-sol"],
-    createdAt: "2024-03-10",
-    owner: "Luis Vargas",
-    phone: "+51 985 432 109",
-    email: "tours@vinadelsolcanete.pe",
-    features: ["reservations", "tickets", "catalog", "reviews", "campaigns"],
-  },
-  {
-    id: "4",
-    slug: "hotel-luna",
-    name: "Hotel Boutique Luna",
-    tagline: "Lujo íntimo en la costa peruana",
-    category: "hotel",
-    location: "San Vicente de Cañete",
-    plan: "enterprise",
-    status: "active",
-    rating: 4.8,
-    reviewCount: 267,
-    monthlyRevenue: 34500,
-    reservationsThisMonth: 128,
-    ordersThisMonth: 340,
-    description:
-      "Hotel boutique de lujo con 24 habitaciones premium, spa, restaurante gourmet y vistas panorámicas al Pacífico.",
-    theme: THEMES["hotel-luna"],
-    createdAt: "2023-11-20",
-    owner: "Mariela Quispe",
-    phone: "+51 984 321 098",
-    email: "reservas@hotelluna.pe",
-    features: ["reservations", "delivery", "catalog", "reviews", "loyalty", "campaigns"],
-  },
-];
-
 // ─── Helper to get theme CSS vars as style object ─────────────────────────────
 
 export function themeToVars(theme: TenantTheme): React.CSSProperties {
@@ -246,10 +149,6 @@ export function themeToVars(theme: TenantTheme): React.CSSProperties {
 
 export function getTheme(slug: string): TenantTheme {
   return THEMES[slug] ?? THEMES.default;
-}
-
-export function getTenant(slug: string): Tenant | undefined {
-  return TENANTS.find((t) => t.slug === slug);
 }
 
 export function buildTenantFromApi(apiTenant: TenantApiData): Tenant {
